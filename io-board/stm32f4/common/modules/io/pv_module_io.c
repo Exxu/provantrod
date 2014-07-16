@@ -9,7 +9,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "pv_module_io.h"
-#include "../datapr/c_datapr_MahonyAHRS.h"
 
 /** @addtogroup ProVANT_Modules
   * @{
@@ -26,7 +25,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define MODULE_PERIOD	   10//ms
+#define MODULE_PERIOD	   5//ms
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -110,12 +109,12 @@ void module_io_init() {
 }
 
 /** \brief Caso detecte overflow dos ticks do sistema, soma 25565 TODO rever valor */
-long verifyOverflow(deltaT){
-	if (deltaT < 0)
-		deltaT = deltaT + 25565; //Valor que dá overflow - REVER valor
-
-	return deltaT;
-}
+//long verifyOverflow(deltaT){
+//	if (deltaT < 0)
+//		deltaT = deltaT + 25565; //Valor que dá overflow - REVER valor
+//
+//	return deltaT;
+//}
 
 /**\ brief Calcula o set point do ESC a partir da forca passada por argumento
  * Curva retirada dos ensaios com os motores brushless no INEP
@@ -142,9 +141,9 @@ int setPointESC_Forca(float forca){
   * Loop que amostra sensores e escreve nos atuadores como necessário.
   *
   */
-unsigned char sp_right=10;
-unsigned char sp_left=10;
-bool trigger = true;
+//unsigned char sp_right=10;
+//unsigned char sp_left=10;
+//bool trigger = true;
 
 void module_io_run() 
 {
@@ -164,12 +163,17 @@ void module_io_run()
 		
 		/// IMU DATA
 		#if 1
-		 	taskENTER_CRITICAL();
 		 	c_io_imu_getRaw(accRaw, gyrRaw, magRaw);
-			taskEXIT_CRITICAL();
 
-			c_datapr_MahonyAHRSupdate(attitude_quaternion, velAngular, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
-			//c_datapr_MahonyAHRSupdate(attitude_quaternion,gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
+			c_datapr_MahonyAHRSupdate(attitude_quaternion, velAngular,
+										gyrRaw[0],gyrRaw[1],gyrRaw[2],
+										accRaw[0],accRaw[1],accRaw[2],
+										magRaw[0],magRaw[1],magRaw[2]);
+			// Chamada sem magnetometro
+//			c_datapr_MahonyAHRSupdate(attitude_quaternion,
+//										gyrRaw[0],gyrRaw[1],gyrRaw[2],
+//										accRaw[0],accRaw[1],accRaw[2],
+//										0,0,0);
 			c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
 			c_io_imu_EulerMatrix(rpy, velAngular);
 
@@ -217,20 +221,28 @@ void module_io_run()
 			}
 */
 
-			taskENTER_CRITICAL();
-			// 100 iteracoes com a thread periodica de 10ms = 1segundo
-			if (iterations < 500){
+
+			// 200 iteracoes com a thread periodica de 5ms = 1segundo
+			if (iterations < 200){
+				taskENTER_CRITICAL();
+
 				c_io_blctrl_setSpeed(0, 10 );
 				c_common_utils_delayus(10);
 				c_io_blctrl_setSpeed(1, 10 );
+
+				taskEXIT_CRITICAL();
 			}
 			else
 			{
+				taskENTER_CRITICAL();
+
 				c_io_blctrl_setSpeed(1, 15 );
 				c_common_utils_delayus(10);
 				c_io_blctrl_setSpeed(0, 15 );
+
+				taskEXIT_CRITICAL();
 			}
-			taskEXIT_CRITICAL();
+
 		#endif
 		
 		/// SONAR

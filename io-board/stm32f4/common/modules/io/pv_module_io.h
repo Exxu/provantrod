@@ -50,6 +50,8 @@
 
 #include "pv_typedefs.h"
 
+#include "c_datapr_MahonyAHRS.h"
+
 /* Exported types ------------------------------------------------------------*/
 
  /** \brief Ponteiro de in- e outboxes do módulo de RC.

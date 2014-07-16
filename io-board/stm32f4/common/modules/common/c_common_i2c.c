@@ -18,6 +18,7 @@
   *  \brief Funções para uso da I2C (I2C1)
   *
   *  \todo Embutir timeouts nos whiles (travam a thread quando o dipositivo desejado não está no bus).
+  *  \todo Colocar 	taskENTER_CRITICAL() na funcao start e taskEXIT_CRITICAL() no fim da funcao stop
   *
   *  Posto que apenas a I2C1 será usada, as funções terão esta "hard-coded", via define:
   *

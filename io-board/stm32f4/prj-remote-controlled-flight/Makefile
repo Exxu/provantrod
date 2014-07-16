@@ -23,6 +23,9 @@ MCU   = cortex-m4
 #BOARD =-DSTM32F4_H407
 BOARD =-DSTM32F4_DISCOVERY
 
+# Enable function that can disable preemption (taskENTER_CRITICAL())
+PREEMPT = -DENABLE_PREEMPT
+
 # path, root and common dir
 PRJDIR := $(shell pwd)
 PATH   := ${PATH}:$(PRJDIR)
@@ -38,6 +41,7 @@ LIBDIR       := $(PRJDIR)/../lib
 MODULES	      = $(MODDIR)/common
 MODULES	     += $(MODDIR)/rc
 MODULES	     += $(MODDIR)/io
+MODULES      += $(MODDIR)/datapr
 
 # CMSIS Device Drivers directory
 CMSISDIR     := $(LIBDIR)/cmsis
@@ -113,6 +117,8 @@ CFLAGS += -Wunused-value -Wunused-variable -Wunused-but-set-variable #-ftime-rep
 CFLAGS += -Og -O0 -ffunction-sections -fdata-sections -fno-exceptions --specs=nano.specs -Wl,--gc-sections 
 CFLAGS += -std=c99 
 CFLAGS += $(BOARD)
+CFLAGS += $(PREEMPT)
+
 
 ###################################################
 

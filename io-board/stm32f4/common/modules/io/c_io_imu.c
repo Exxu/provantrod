@@ -142,7 +142,13 @@ void c_io_imu_getRaw(float  * accRaw, float * gyrRaw, float * magRaw) {
     float accScale =0.00390625f; // 1/256
     /*All g-ranges, full resolution - typical sensitivity = 256 LSB/g*/
 
+#ifdef ENABLE_PREEMPT
+	taskENTER_CRITICAL();
+#endif
   	c_common_i2c_readBytes(I2Cx_imu, ACCL_ADDR, ACCL_X_ADDR, 6, imuBuffer);
+#ifdef ENABLE_PREEMPT
+	taskEXIT_CRITICAL();
+#endif
   	// Para transformar em valores no SI -> acc/256 *G m/s^2
     accRaw[0] = (int16_t)(imuBuffer[0] | (imuBuffer[1] << 8))*accScale;
     accRaw[1] = (int16_t)(imuBuffer[2] | (imuBuffer[3] << 8))*accScale;
@@ -162,14 +168,26 @@ void c_io_imu_getRaw(float  * accRaw, float * gyrRaw, float * magRaw) {
     float gyrScale =14.375f;
     gyrScale = 0.0174532925f/gyrScale;//0.0174532925 = PI/180
 
+#ifdef ENABLE_PREEMPT
+	taskENTER_CRITICAL();
+#endif
   	c_common_i2c_readBytes(I2Cx_imu, GYRO_ADDR, GYRO_X_ADDR, 6, imuBuffer);
+#ifdef ENABLE_PREEMPT
+	taskEXIT_CRITICAL();
+#endif
   	gyrRaw[0] =  (int16_t)((imuBuffer[1] | (imuBuffer[0] << 8)))*gyrScale;
   	gyrRaw[1] =  (int16_t)((imuBuffer[3] | (imuBuffer[2] << 8)))*gyrScale;
   	gyrRaw[2] =  (int16_t)((imuBuffer[5] | (imuBuffer[4] << 8)))*gyrScale;
 
     // Read x, y, z from magnetometer;
+#ifdef ENABLE_PREEMPT
+	taskENTER_CRITICAL();
+#endif
     c_common_i2c_readBytes(I2Cx_imu, MAGN_ADDR, MAGN_X_ADDR, 6, imuBuffer);
-   
+#ifdef ENABLE_PREEMPT
+	taskEXIT_CRITICAL();
+#endif
+
     magRaw[0] =  (int16_t)((imuBuffer[1] | (imuBuffer[0] << 8)));// X
     magRaw[1] =  (int16_t)((imuBuffer[5] | (imuBuffer[4] << 8)));// Y
     magRaw[2] =  (int16_t)((imuBuffer[3] | (imuBuffer[2] << 8)));// Z
@@ -269,8 +287,6 @@ void c_io_imu_EulerMatrix(float * rpy, float * velAngular){
 /**\brief Quaternion para Euler
  * Solucao adaptada de http://www.sedris.org/wg8home/Documents/WG80485.pdf, "Technical Concepts Orientation,
  * Rotation, Velocity and Acceleration and the SRM" escrito por Paul Berner, página 39
- *
- * Unica alteracão nas equacões é yaw = -yaw_da_referencia e pitch = -pitch_da_referencia
  *
  * @param quaternion
  * @param angulo euler convencao ZYX

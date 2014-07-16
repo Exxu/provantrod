@@ -5,7 +5,7 @@
   * @version V1.0.0
   * @date    8-Jul-2014
   * @brief   Madgwick's implementation of Mayhony's AHRS algorithm.
-  *          See: http://www.x-io.co.uk/node/8#open_source_ahrs_and_imu_algorithms
+  *          See: http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
   ******************************************************************************/
 
 /** 
@@ -20,8 +20,10 @@
   */
 
 /** @addtogroup Datapr_MahonyAHRS
-  *	\brief DOCUMENTAR
+  *	\brief Implementacão do algoritmo encontrado no artigo "Nonlinear Complementary FIlters on the Special Orthogonal Group",
+  *	de Robert Mahony. Adaptado da implementacão feita por Madgwick, encontrado em http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/.
   *
+  * Este site também aborda este filtro: http://www.olliw.eu/2013/imu-data-fusing/
   *
   * @{
   */
@@ -51,19 +53,20 @@ float invSqrt(float x);
 
 /** \brief AHRS algorithm update
  *
- * DOCUMENTAR
+ * Implementacao em quaternions do filtro complementar não linear encontrado no artigo "Nonlinear Complementary FIlters on the Special Orthogonal Group",
+ *	de Robert Mahony.
  *
- * @param q
- * @param velAngular_corrigida
- * @param gx
- * @param gy
- * @param gz
- * @param ax
- * @param ay
- * @param az
- * @param mx
- * @param my
- * @param mz
+ * @param q orientacao atual estimada pelo filtro, em quaternions
+ * @param velAngular_corrigida leitura do giroscopio corrigida pelo bias estimado pelo filtro
+ * @param gx medida giroscopio eixo X
+ * @param gy medida giroscopio eixo Y
+ * @param gz medida giroscopio eixo Z
+ * @param ax medida acelerometro eixo X
+ * @param ay medida acelerometro eixo Y
+ * @param az medida acelerometro eixo Z
+ * @param mx medida magnetometro eixo X
+ * @param my medida magnetometro eixo Y
+ * @param mz medida magnetometro eixo Z
  */
 
 void c_datapr_MahonyAHRSupdate(float * q, float * velAngular_corrigida, float gx, float gy, float gz, float ax, float ay, float az,
@@ -183,17 +186,19 @@ void c_datapr_MahonyAHRSupdate(float * q, float * velAngular_corrigida, float gx
 
 
 /** \brief IMU algorithm update
+ * Implementacao em quaternions do filtro complementar não linear encontrado no artigo "Nonlinear Complementary FIlters on the Special Orthogonal Group",
+ *	de Robert Mahony. Este algoritmo NAO USA MAGNETOMETRO.
  *
- * DOCUMENTAR
+ *	Este metodo é usado internamente e é chamado quando a leitura dos magnetometros são todas iguais a zero.
  *
- * @param q
- * @param velAngular_corrigida
- * @param gx
- * @param gy
- * @param gz
- * @param ax
- * @param ay
- * @param az
+ * @param q orientacao atual estimada pelo filtro, em quaternions
+ * @param velAngular_corrigida leitura do giroscopio corrigida pelo bias estimado pelo filtro
+ * @param gx medida giroscopio eixo X
+ * @param gy medida giroscopio eixo Y
+ * @param gz medida giroscopio eixo Z
+ * @param ax medida acelerometro eixo X
+ * @param ay medida acelerometro eixo Y
+ * @param az medida acelerometro eixo Z
  */
 
 void c_datapr_MahonyAHRSupdateIMU(float * q, float * velAngular_corrigida, float gx, float gy, float gz, float ax, float ay, float az) {
@@ -275,10 +280,15 @@ void c_datapr_MahonyAHRSupdateIMU(float * q, float * velAngular_corrigida, float
 }
 
 /** \brief Fast inverse square-root
- *	See: http://en.wikipedia.org/wiki/Fast_inverse_square_root
- * DOCUMENTAR
  *
- * @param X
+ *	Para uso interno. Aclamada e mistica funcão utilizada no Quake III Arena.
+ *	Realiza o equivalente a operacão 1/sqrt(x), porém de forma mais rápida e gloriosa.
+ *	Se voce for geek de verdade então ganhará o dia lendo o link:
+ *
+ *	http://en.wikipedia.org/wiki/Fast_inverse_square_root
+ *
+ *
+ * @param X 1/sqrt(x)
  */ 
 
 float invSqrt(float x) {
