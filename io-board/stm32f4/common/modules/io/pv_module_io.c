@@ -58,13 +58,15 @@ pv_msg_datapr_sensor_time oSensorTime;
   * @param  None
   * @retval None
   */
-void module_io_init() {
+void module_io_init() 
+{
 	//float accRaw[3], gyrRaw[3], magRaw[3]; // TODO Tirar daqui junto com o init
 
 	/* Inicialização do hardware do módulo */
 	LED_builtin_io = c_common_gpio_init(GPIOD, GPIO_Pin_13, GPIO_Mode_OUT);
-	c_common_i2c_init(I2C3); //esc
+	c_common_i2c_init(I2C3); //esc 
 	c_common_i2c_init(I2C1); //imu
+
 	c_common_usart2_init(460800);
 
 	/* Inicializar do sonar */
@@ -109,12 +111,12 @@ void module_io_init() {
 }
 
 /** \brief Caso detecte overflow dos ticks do sistema, soma 25565 TODO rever valor */
-//long verifyOverflow(deltaT){
-//	if (deltaT < 0)
-//		deltaT = deltaT + 25565; //Valor que dá overflow - REVER valor
-//
-//	return deltaT;
-//}
+long verifyOverflow(long int deltaT){
+	if (deltaT < 0)
+		deltaT = deltaT + 25565; //Valor que dá overflow - REVER valor
+
+	return deltaT;
+}
 
 /**\ brief Calcula o set point do ESC a partir da forca passada por argumento
  * Curva retirada dos ensaios com os motores brushless no INEP
@@ -148,34 +150,28 @@ int setPointESC_Forca(float forca){
 void module_io_run() 
 {
 	float accRaw[3], gyrRaw[3], magRaw[3];
-	char  ax[16], ay[16], az[16], r[16], p[16], y[16], dr[16], dp[16], dy[16];
 	float rpy[] = {0,0,0,0,0,0};
 	float velAngular[3]={0,0,0};
 	int iterations=0;
-
+	int patrick=1;
 
 	while(1)
 	{
 		lastWakeTime = xTaskGetTickCount();
 
 		xQueueReceive(pv_interface_io.iActuation, &iActuation, 0);
-		c_common_gpio_toggle(LED_builtin_io);
-		
+
+
 		/// IMU DATA
 		#if 1
-		 	c_io_imu_getRaw(accRaw, gyrRaw, magRaw);
 
-			c_datapr_MahonyAHRSupdate(attitude_quaternion, velAngular,
-										gyrRaw[0],gyrRaw[1],gyrRaw[2],
-										accRaw[0],accRaw[1],accRaw[2],
-										magRaw[0],magRaw[1],magRaw[2]);
-			// Chamada sem magnetometro
-//			c_datapr_MahonyAHRSupdate(attitude_quaternion,
-//										gyrRaw[0],gyrRaw[1],gyrRaw[2],
-//										accRaw[0],accRaw[1],accRaw[2],
-//										0,0,0);
+		 	c_common_gpio_toggle(LED_builtin_io);
+		 	c_io_imu_getRaw(accRaw, gyrRaw, magRaw);
+			c_datapr_MahonyAHRSupdate(attitude_quaternion, velAngular, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
+			//c_datapr_MahonyAHRSupdate(attitude_quaternion,gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
 			c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
 			c_io_imu_EulerMatrix(rpy, velAngular);
+			c_common_gpio_toggle(LED_builtin_io);
 
 		#endif
 		/// SERVOS
@@ -221,28 +217,28 @@ void module_io_run()
 			}
 */
 
-
-			// 200 iteracoes com a thread periodica de 5ms = 1segundo
-			if (iterations < 200){
-				taskENTER_CRITICAL();
-
-				c_io_blctrl_setSpeed(0, 10 );
+			//taskENTER_CRITICAL();
+			// 100 iteracoes com a thread periodica de 10ms = 1segundo
+			if (iterations < 500)
+			{
+				//c_io_blctrl_setSpeed(0, 10 );
 				c_common_utils_delayus(10);
-				c_io_blctrl_setSpeed(1, 10 );
-
-				taskEXIT_CRITICAL();
+				c_io_blctrl_setSpeed(0, 10 );
 			}
 			else
 			{
-				taskENTER_CRITICAL();
-
-				c_io_blctrl_setSpeed(1, 15 );
+				if(iterations>1000)
+				{
+					//iterations=500;
+					c_io_blctrl_setSpeed(0, 180 );
+				}
+				else
+					c_io_blctrl_setSpeed(0, 90 );
 				c_common_utils_delayus(10);
-				c_io_blctrl_setSpeed(0, 15 );
-
-				taskEXIT_CRITICAL();
+				//c_io_blctrl_setSpeed(0, 15 );
+				c_io_blctrl_updateBuffer(0);
 			}
-
+			//taskEXIT_CRITICAL();
 		#endif
 		
 		/// SONAR
@@ -254,11 +250,30 @@ void module_io_run()
 
 		/// DEBUG
 		#if 1
-			sprintf(str, "imu -> \t %d \t %d \t %d \t %d \t %d \t %d \t %d\n\r" ,(int)(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG),
-					(int)(rpy[PV_IMU_PITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_YAW  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_DROLL  ]*RAD_TO_DEG),
-					(int)(rpy[PV_IMU_DPITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_DYAW  ]*RAD_TO_DEG), iterations);
-			
-			c_common_usart_puts(USART2, str);
+	    	// multwii
+	    	#if 0
+
+		    	c_common_datapr_multwii_bicopter_identifier();
+		    	c_common_datapr_multwii_motor_pins();
+		    	c_common_datapr_multwii_motor(iActuation.escLeftSpeed+2,iActuation.escRightSpeed+2);
+		    	c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG, rpy[PV_IMU_YAW  ]*RAD_TO_DEG );
+		    	arm_scale_f32(accRaw,RAD_TO_DEG,accRaw,3);
+		    	arm_scale_f32(gyrRaw,RAD_TO_DEG,gyrRaw,3);
+		    	c_common_datapr_multwii_raw_imu(accRaw,gyrRaw,magRaw);
+		    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
+		    	c_common_datapr_multwii_debug(iActuation.escLeftSpeed,iActuation.escRightSpeed,iActuation.servoLeft*RAD_TO_DEG,iActuation.servoLeft*RAD_TO_DEG);
+
+		    	c_common_datapr_multwii_sendstack(USART2);
+	    	#else  
+	    	// serial
+	    	 	
+				sprintf(str, "imu -> %d-(%d-%d-%d) ->%d \t %d \t %d \t %d \t %d \t %d \t %d \t %d\n\r" ,c_io_blctrl_readSpeed(0),c_io_blctrl_read(0,2),c_io_blctrl_read(0,3),c_io_blctrl_read(0,4),patrick*10, (int)(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG),
+				(int)(rpy[PV_IMU_PITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_YAW  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_DROLL  ]*RAD_TO_DEG),
+				(int)(rpy[PV_IMU_DPITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_DYAW  ]*RAD_TO_DEG), iterations);
+
+				c_common_usart_puts(USART2, str);
+				
+			#endif
 		#endif
 
 		/// DADOS OUT
@@ -288,4 +303,6 @@ void module_io_run()
 /**
   * @}
   */
+
+
 

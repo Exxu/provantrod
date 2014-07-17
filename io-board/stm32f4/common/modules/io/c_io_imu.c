@@ -67,8 +67,6 @@ unsigned char MAGN_ID = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 
-void c_io_imu_Quaternion2Euler(float * q, float * rpy);
-void c_io_imu_EulerMatrix(float * rpy, float * velAngular);
 //void c_io_imu_Euler2Quaternion(float * rpy, float * q);
 
 /* Private functions ---------------------------------------------------------*/

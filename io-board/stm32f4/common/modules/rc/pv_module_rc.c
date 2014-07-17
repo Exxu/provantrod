@@ -100,7 +100,7 @@ void module_rc_run() {
       pv_msg_datapr_position position_reference = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
 
       // Limita a velocidade dos ESCs a partir do RC
-      throttle_control = c_rc_receiver_getChannel(C_RC_CHANNEL_PITCH);
+      //throttle_control = c_rc_receiver_getChannel(C_RC_CHANNEL_PITCH);
 //      if (throttle_control < 0)
     	  throttle_control = -throttle_control;
 
@@ -112,7 +112,7 @@ void module_rc_run() {
       // Modulando sinal do ESC para testes
 //      oActuation.escLeftSpeed  = (oActuation.escLeftSpeed*throttle_control)/100;
 //      oActuation.escRightSpeed = (oActuation.escRightSpeed*throttle_control)/100;
-      oActuation.escLeftSpeed  = throttle_control;
+      //oActuation.escLeftSpeed  = throttle_control;
 
     #endif
     

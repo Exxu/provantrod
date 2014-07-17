@@ -41,8 +41,8 @@ unsigned char usart2_recv_buffer[RECV_BUFFER_SIZE]; //! Ring-Buffer de recebimen
 unsigned char usart3_recv_buffer[RECV_BUFFER_SIZE]; //! Ring-Buffer de recebimento de USART3.
 unsigned char usart6_recv_buffer[RECV_BUFFER_SIZE]; //! Ring-Buffer de recebimento de USART6.
 
-int usart1_rb_in  = 0; //! Index do Ring-Buffer para recebimento na USART2.
-int usart1_rb_out = 0; //! Index para leitura do Ring-Buffer da USART2.
+int usart1_rb_in  = 0; //! Index do Ring-Buffer para recebimento na USART1.
+int usart1_rb_out = 0; //! Index para leitura do Ring-Buffer da USART1.
 
 int usart2_rb_in  = 0; //! Index do Ring-Buffer para recebimento na USART2.
 int usart2_rb_out = 0; //! Index para leitura do Ring-Buffer da USART2.
@@ -63,7 +63,7 @@ bool usart6_available_flag = 0;	//! Flag de recebimento de USART6.
 /* Exported functions definitions --------------------------------------------*/
 
 /** \brief Inicializa a USART6 com o Baurate desejado em modo 8-N-1.
-  *	Instala USART2 nos pinos PA6 e PA7 (TX e RX, respectivamente) - pinos 1 e 2
+  *	Instala USART6 nos pinos PA6 e PA7 (TX e RX, respectivamente) - pinos 1 e 2
   *	do conector UEXT (10 vias).
   * Tratador de interrupções para recebimento já é instalado automaticamente.
   *

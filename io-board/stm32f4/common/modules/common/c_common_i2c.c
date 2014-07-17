@@ -125,7 +125,7 @@ void c_common_i2c_init(I2C_TypeDef* I2Cx){
         GPIO_PinAFConfig(GPIOB, GPIO_PinSource9, GPIO_AF_I2C1); // SDA
 
         // configure I2C1
-        I2C_InitStruct.I2C_ClockSpeed = 100000; // 100kHz
+        I2C_InitStruct.I2C_ClockSpeed = 400000; // 400kHz    foi modificado para ser mais rapido a leitura da imu na discovery
         I2C_InitStruct.I2C_Mode = I2C_Mode_I2C; // I2C mode
         I2C_InitStruct.I2C_DutyCycle = I2C_DutyCycle_2; // 50% duty cycle --> standard
         I2C_InitStruct.I2C_OwnAddress1 = 0x00;         // own address, not relevant in master mode
@@ -231,7 +231,9 @@ void c_common_i2c_init(I2C_TypeDef* I2Cx){
  * 						\em I2C_Direction_Transmitter \em para <b> Master transmitter mode </b>, ou
  * 						\em I2C_Direction_Receiver \em para <b> Master receiver mode</b>.
  */
-void c_common_i2c_start(I2C_TypeDef* I2Cx, uint8_t address, uint8_t direction) {
+void c_common_i2c_start(I2C_TypeDef* I2Cx, uint8_t address, uint8_t direction)
+{
+    taskENTER_CRITICAL();
         // wait until I2C1 is not busy anymore
 		timeoutCounter = c_common_utils_millis();
 //		timeoutCounter = c_common_utils_micros();
@@ -327,6 +329,7 @@ uint8_t c_common_i2c_readNack(I2C_TypeDef* I2Cx) {
 void c_common_i2c_stop(I2C_TypeDef* I2Cx) {
         // Send I2C1 STOP Condition
         I2C_GenerateSTOP(I2Cx, ENABLE);
+        taskEXIT_CRITICAL();
 }
 
 /** \brief Lê uma quantidade de bytes de um dado endereço em um determinado dispositivo.

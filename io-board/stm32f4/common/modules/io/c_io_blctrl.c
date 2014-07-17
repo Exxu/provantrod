@@ -29,7 +29,7 @@
 //#define I2Cx_blctrl             I2C2// i2c of blctrl
 
 #define BLCTRL_NUM_OF_MAGNETS   14 // numero de polos do motor
-#define BLCTRL_BUFFER_SIZE      10 // tamanho do buffer
+#define BLCTRL_BUFFER_SIZE      0x18 // tamanho do buffer
 #define BLCTRL_BUFFER_L         4 // tamanho do buffer
 #define BLCTRL_CURRENT          0 // local da memoria onde esta o valor de corrente
 #define BLCTRL_TEMPERATURE      2 // local da memoria onde esta o valor de temperatura
@@ -39,6 +39,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+bool ppm;
 char blctrl_buffer[BLCTRL_BUFFER_L][BLCTRL_BUFFER_SIZE]={};  // buffer para a leitura do esc
 I2C_TypeDef* I2Cx_blctrl; // I2C do blctrl
 
@@ -55,7 +56,7 @@ I2C_TypeDef* I2Cx_blctrl; // I2C do blctrl
 
 void c_io_blctrl_init_ppm()
 {
-  #define ppm true
+    ppm=1;
     #ifdef STM32F4_H407
     GPIO_InitTypeDef GPIO_InitStructure;
     TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
@@ -146,7 +147,7 @@ void c_io_blctrl_init_ppm()
   */
 void c_io_blctrl_init_i2c(I2C_TypeDef* I2Cx)
 {
-  #define ppm false
+  ppm=0;
   I2Cx_blctrl=I2Cx;
 }
 
@@ -193,6 +194,18 @@ int  c_io_blctrl_setSpeed(uint8_t ID, unsigned char speed)
   }
 }
 
+
+/** \brief Lê o valor dado um endereço de memoria, entre 0 e 0x18.
+  * Retorna o valor em caso de sucesso.
+  *
+  * @param  ID ID do esc.
+  * @retval Local da memoria.
+  */
+int  c_io_blctrl_read(uint8_t ID, int local)
+{
+  return (int) blctrl_buffer[ID][local];
+}
+
 /** \brief Lê a velocidade atual do esc, em rpm.
   * Retorna o valor em caso de sucesso.
   *
@@ -223,14 +236,7 @@ int  c_io_blctrl_readVoltage(uint8_t ID)
   */
 int  c_io_blctrl_updateBuffer(uint8_t ID)
 {  
-  for(int i=0;i<BLCTRL_BUFFER_SIZE;i++)
-  {
-    c_common_i2c_start(I2Cx_blctrl, (BLCTRL_ADDR+ID)<<1, I2C_Direction_Receiver);
-    blctrl_buffer[ID][i]=c_common_i2c_readNack(I2Cx_blctrl);
-    for(int b=0;b<1000;b++); // gastar tempo para conseguir ler varios enderecos
-    c_common_i2c_stop(I2Cx_blctrl);
-  }
-  
+  c_common_i2c_readBytes(I2Cx_blctrl, BLCTRL_ADDR + ID, 0x00, 4, blctrl_buffer[ID]);
   return 1;
 }
 

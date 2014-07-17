@@ -131,7 +131,7 @@ void sonar_task(void *pvParameters)
   while(1)
   {
     char str[64];
-    sprintf(str, "Distance: %d \n\r", c_io_sonar_read());
+    sprintf(str, "Distance: %f \n\r", c_io_sonar_read());
     c_common_usart_puts(USART2, str);
     vTaskDelay(300/portTICK_RATE_MS);
   }

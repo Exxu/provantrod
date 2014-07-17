@@ -49,6 +49,8 @@
 #include "c_io_sonar.h"
 
 #include "pv_typedefs.h"
+#include "c_datapr_MultWii.h"
+#include "c_datapr_MahonyAHRS.h"
 
 #include "c_datapr_MahonyAHRS.h"
 
