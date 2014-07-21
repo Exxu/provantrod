@@ -155,25 +155,44 @@ void module_io_run()
 	int iterations=0;
 	int patrick=1;
 
+
+	pv_msg_io_actuation    actuation = {0,0.0f,0.0f,0.0f,0.0f};
+	pv_msg_datapr_attitude attitude  = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+	pv_msg_datapr_attitude attitude_reference = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+	pv_msg_datapr_position position  = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+	pv_msg_datapr_position position_reference = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
+
 	while(1)
 	{
+		c_common_gpio_toggle(LED_builtin_io);
 		lastWakeTime = xTaskGetTickCount();
 
 		xQueueReceive(pv_interface_io.iActuation, &iActuation, 0);
 
-
 		/// IMU DATA
 		#if 1
-			
-		 	c_common_gpio_toggle(LED_builtin_io);
 		 	c_io_imu_getRaw(accRaw, gyrRaw, magRaw);
 			c_datapr_MahonyAHRSupdate(attitude_quaternion, velAngular, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
 			//c_datapr_MahonyAHRSupdate(attitude_quaternion,gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
 			c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
 			c_io_imu_EulerMatrix(rpy, velAngular);
-			c_common_gpio_toggle(LED_builtin_io);
-
 		#endif
+
+
+
+		/// DADOS OUT
+		oAttitude.roll     = rpy[PV_IMU_ROLL  ];
+		oAttitude.pitch    = rpy[PV_IMU_PITCH ];
+		oAttitude.yaw      = rpy[PV_IMU_YAW   ];
+		oAttitude.dotRoll  = rpy[PV_IMU_DROLL ];
+		oAttitude.dotPitch = rpy[PV_IMU_DPITCH];
+		oAttitude.dotYaw   = rpy[PV_IMU_DYAW  ];
+		oSensorTime.IMU_sample_time = MODULE_PERIOD/1000;
+
+		#if 1
+			iActuation = RC_controller(oAttitude,attitude_reference,position,position_reference,oSensorTime,1);
+		#endif
+
 		/// SERVOS
 		#if 1
 			if( (iActuation.servoRight*RAD_TO_DEG<70) && (iActuation.servoRight*RAD_TO_DEG>-70) )
@@ -186,36 +205,37 @@ void module_io_run()
 		// set points para os ESCs
 		/// ESCS
 		#if 1
-/*
-			iActuation.escRightSpeed = 8.0f;
-			iActuation.escLeftSpeed  = 8.0f;
 
-			sp_right = setPointESC_Forca(iActuation.escRightSpeed);
-			sp_left = setPointESC_Forca(iActuation.escLeftSpeed);
+		/*
+					iActuation.escRightSpeed = 8.0f;
+					iActuation.escLeftSpeed  = 8.0f;
 
-			if ( (iActuation.escLeftSpeed > 50))
-			{
-				if (trigger)
-				{
-					sp_right++;
-					sp_left++;
-				}
-			trigger = false;
-			}
-			else
-				trigger = true;
+					sp_right = setPointESC_Forca(iActuation.escRightSpeed);
+					sp_left = setPointESC_Forca(iActuation.escLeftSpeed);
 
-
-			if ( (iActuation.escLeftSpeed < -50))
-			{
-				if ( trigger && (sp_right > 9) && (sp_left > 9))
-				{
-					sp_right--;
-					sp_left--;
+					if ( (iActuation.escLeftSpeed > 50))
+					{
+						if (trigger)
+						{
+							sp_right++;
+							sp_left++;
+						}
 					trigger = false;
-				}
-			}
-*/
+					}
+					else
+						trigger = true;
+
+
+					if ( (iActuation.escLeftSpeed < -50))
+					{
+						if ( trigger && (sp_right > 9) && (sp_left > 9))
+						{
+							sp_right--;
+							sp_left--;
+							trigger = false;
+						}
+					}
+		*/
 
 			//taskENTER_CRITICAL();
 			// 100 iteracoes com a thread periodica de 10ms = 1segundo
@@ -230,7 +250,7 @@ void module_io_run()
 				c_io_blctrl_setSpeed(0, 15 );
 				c_common_utils_delayus(10);
 				c_io_blctrl_setSpeed(1, 15 );
-				c_io_blctrl_updateBuffer(1);
+				//c_io_blctrl_updateBuffer(1);
 			}
 			//taskEXIT_CRITICAL();
 		#endif
@@ -260,24 +280,29 @@ void module_io_run()
 		    	c_common_datapr_multwii_sendstack(USART2);
 	    	#else  
 	    	// serial
-	    	 	
-				sprintf(str, "imu ->%d %d-%d \t %d \t %d \t %d \t %d \t %d \t %d \t %d \t %d\n\r" ,(int)c_io_sonar_read(),c_io_blctrl_readSpeed(1),c_io_blctrl_read(1,3),patrick*10, (int)(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG),
-				(int)(rpy[PV_IMU_PITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_YAW  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_DROLL  ]*RAD_TO_DEG),
-				(int)(rpy[PV_IMU_DPITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_DYAW  ]*RAD_TO_DEG), iterations);
+	    	 	#if 0
+				sprintf(str,
+					">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\r OUT ->S:%d \t rpy: %d \t %d \t %d \t drpy: %d \t %d \t %d \t servo: %d \t %d \t motor: %d \t %d\n\r" ,
+				(int)c_io_sonar_read(), (int)(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG),
+				(int)(rpy[PV_IMU_PITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_YAW  ]*RAD_TO_DEG),
+				(int)(rpy[PV_IMU_DROLL  ]*RAD_TO_DEG),(int)(rpy[PV_IMU_DPITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_DYAW  ]*RAD_TO_DEG),
+				(int)(iActuation.servoRight*RAD_TO_DEG),(int)(iActuation.servoLeft*RAD_TO_DEG),
+				(int)iActuation.escRightSpeed,(int)iActuation.escLeftSpeed);
 
 				c_common_usart_puts(USART2, str);
+				#else
+				int scale=100;
+				sprintf(str,"%d  %d  %d | %d  | %d %d | %d %d \n\r",
+				(int)(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG),(int)(rpy[PV_IMU_PITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_YAW  ]*RAD_TO_DEG),
+				(int)c_io_sonar_read(),
+				(int)iActuation.escRightSpeed,(int)iActuation.escLeftSpeed,
+				(int)(iActuation.servoRight*RAD_TO_DEG*scale),(int)(iActuation.servoLeft*RAD_TO_DEG*scale));
+				c_common_usart_puts(USART2, str);
+				#endif
+
 				
 			#endif
 		#endif
-
-		/// DADOS OUT
-		oAttitude.roll     = rpy[PV_IMU_ROLL  ];
-		oAttitude.pitch    = rpy[PV_IMU_PITCH ];
-		oAttitude.yaw      = rpy[PV_IMU_YAW   ];
-		oAttitude.dotRoll  = rpy[PV_IMU_DROLL ];
-		oAttitude.dotPitch = rpy[PV_IMU_DPITCH];
-		oAttitude.dotYaw   = rpy[PV_IMU_DYAW  ];
-		oSensorTime.IMU_sample_time = MODULE_PERIOD/1000;
 
 		iterations++;
 
@@ -285,6 +310,7 @@ void module_io_run()
       		xQueueOverwrite(pv_interface_io.oAttitude, &oAttitude);
       		xQueueOverwrite(pv_interface_io.oSensorTime, &oSensorTime);
 		}
+		c_common_gpio_toggle(LED_builtin_io);
 		vTaskDelayUntil( &lastWakeTime, (MODULE_PERIOD / portTICK_RATE_MS));
 	}
 }

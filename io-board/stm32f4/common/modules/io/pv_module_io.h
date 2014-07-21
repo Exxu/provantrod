@@ -48,6 +48,8 @@
 #include "c_io_imu.h"
 #include "c_io_sonar.h"
 
+#include "c_rc_control.h"
+
 #include "pv_typedefs.h"
 #include "c_datapr_MultWii.h"
 #include "c_datapr_MahonyAHRS.h"

@@ -220,8 +220,8 @@ void c_common_datapr_multwii_servos(float angle1,float angle2)
   serialize16(0);
   serialize16(0);
 
-  serialize16((int)(1500+8.333*angle1));
-  serialize16((int)(1500+8.333*angle2));
+  serialize16((int)(angle1));
+  serialize16((int)(angle2));
   serialize16(0);
   serialize16(0);
   tailSerialReply();
@@ -235,8 +235,8 @@ void c_common_datapr_multwii_servos(float angle1,float angle2)
 void c_common_datapr_multwii_motor(float forca_esquerdo,float forca_direito)
 {
   headSerialResponse(16, MSP_MOTOR);
-  serialize32_as16((int)((forca_esquerdo*100)));
-  serialize32_as16((int)((forca_direito*100)));
+  serialize32_as16((int)((forca_esquerdo)));
+  serialize32_as16((int)((forca_direito)));
   serialize32_as16(0);
   serialize32_as16(0);
 
