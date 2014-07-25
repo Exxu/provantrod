@@ -51,28 +51,28 @@
 /* Private define ------------------------------------------------------------*/
 
 // PID controller gains
-#if 0
-	#define KPPHI    68.0f
-	#define KVPHI    15.0f
+#if 1
+	#define KPPHI    6.0f
+	#define KVPHI    2.0f
 	#define KIPHI	 0.0f
-	#define KPTHETA  68.0f
-	#define KVTHETA  15.0f
+	#define KPTHETA  6.0f
+	#define KVTHETA  2.0f
 	#define KITHETA	 0.0f
-	#define KPPSI    100.0f
-	#define KVPSI    20.0f
-	#define KIPSI	 0.0f
-	#define KVZ		 5.0f
-	#define KPZ		 30.0f
-#else
-	#define KPPHI    50.0f
-	#define KVPHI    10.0f
-	#define KIPHI	 1.0f
-	#define KPTHETA  50.0f
-	#define KVTHETA  10.0f
-	#define KITHETA	 1.0f
 	#define KPPSI    0.0f
 	#define KVPSI    0.0f
 	#define KIPSI	 0.0f
+	#define KVZ		 4.8f
+	#define KPZ		 5.76f
+#else
+	#define KPPHI    10.0f
+	#define KVPHI    6.0f
+	#define KIPHI	 3.0f
+	#define KPTHETA  10.0f
+	#define KVTHETA  6.0f
+	#define KITHETA	 3.0f
+	#define KPPSI    100.0f
+	#define KVPSI    20.0f
+	#define KIPSI	 10.0f
 	#define KVZ		 0.0f
 	#define KPZ		 0.0f
 #endif
@@ -94,7 +94,7 @@
 //#define REFERENCE_FILTER_ZERO	100
 
 // Fixed Sample Time - TODO Rever se vai usar esse ou o variavel que chega por mensagem do pv_msg_io
-#define CONTROL_SAMPLE_TIME 	0.010f
+#define CONTROL_SAMPLE_TIME 	0.005f
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -209,6 +209,7 @@ arm_matrix_instance_f32 PD_gains_step(pv_msg_datapr_attitude attitude, pv_msg_da
 	gamma_f32[1] = -KPTHETA * (attitude.pitch - attitude_reference.pitch)
 						- KVTHETA * (attitude.dotPitch - attitude_reference.dotPitch)
 						- KITHETA * integrated_error.pitch;
+
 	//gamma3
 	gamma_f32[2] = -KPPSI * (attitude.yaw - attitude_reference.yaw)
 						- KVPSI * (attitude.dotYaw - attitude_reference.dotYaw)
