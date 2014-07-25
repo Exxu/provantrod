@@ -51,12 +51,12 @@
 /* Private define ------------------------------------------------------------*/
 
 // PID controller gains
-#if 0
-	#define KPPHI    68.0f
-	#define KVPHI    10.0f
+#if 1
+	#define KPPHI    100.0f
+	#define KVPHI    20.0f
 	#define KIPHI	 0.0f
-	#define KPTHETA  68.0f
-	#define KVTHETA  10.0f
+	#define KPTHETA  100.0f
+	#define KVTHETA  20.0f
 	#define KITHETA	 0.0f
 	#define KPPSI    0.0f
 	#define KVPSI    0.0f
@@ -211,12 +211,9 @@ arm_matrix_instance_f32 PD_gains_step(pv_msg_datapr_attitude attitude, pv_msg_da
 						- KITHETA * integrated_error.pitch;
 
 	//gamma3
-	if (attitude.yaw > )
 	gamma_f32[2] = -KPPSI * (attitude.yaw - attitude_reference.yaw)
 						- KVPSI * (attitude.dotYaw - attitude_reference.dotYaw)
 						- KIPSI * integrated_error.yaw;
-
-	gamma_f32[2] = gamma_f32[2]*securityStop_yaw;
 
 	arm_mat_init_f32(&gamma, 3, 1, (float32_t *)gamma_f32);
 
