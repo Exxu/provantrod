@@ -25,7 +25,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define MODULE_PERIOD	   10//ms
+#define MODULE_PERIOD	   5//ms
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -75,8 +75,10 @@ void module_io_init()
 	/* Inicializar os servos */
 	c_io_rx24f_init(1000000);
 	c_common_utils_delayms(2);
-	c_io_rx24f_setSpeed(1, 20);
-	c_io_rx24f_setSpeed(2, 20);
+//	c_io_rx24f_setSpeed(1, 20);
+//	c_io_rx24f_setSpeed(2, 20);
+	c_io_rx24f_setSpeed(1, 0);
+	c_io_rx24f_setSpeed(2, 0);
 	c_common_utils_delayms(2);
 	/* CCW Compliance Margin e CCW Compliance margin */
 	c_io_rx24f_write(1, 0x1A,0x03);
@@ -121,19 +123,31 @@ long verifyOverflow(long int deltaT){
 /**\ brief Calcula o set point do ESC a partir da forca passada por argumento
  * Curva retirada dos ensaios com os motores brushless no INEP
  */
-int setPointESC_Forca(float forca){
+unsigned char setPointESC_Forca(float forca){
 //	Coefficientes do polinomio
-	float p1 = -0.0013112;
-	float p2 = 0.04625;
-	float p3 = -0.50308;
-	float p4 = 1.0065;
-	float p5 = 23.443;
-	float p6 = -3.254;
+//	float p1 = -0.0013112;
+//	float p2 = 0.04625;
+//	float p3 = -0.50308;
+//	float p4 = 1.0065;
+//	float p5 = 23.443;
+//	float p6 = -3.254;
+//
+//	if (forca <= 0.18)
+//		return 1;
+//	else
+//		return p1*pow(forca,5) + p2*pow(forca,4) + p3*pow(forca,3) + p4*pow(forca,2) + p5*forca + p6;
 
-	if (forca <= 0.18)
-		return 1;
+//	Coefficients:
+	float  p1 = 0.13104;
+	float  p2 = -2.9901;
+	float  p3 = 36.554;
+	float  p4 = -7.945;
+forca = forca -6;
+	if (forca <= 0.23)
+		return (unsigned char)1;
 	else
-		return p1*pow(forca,5) + p2*pow(forca,4) + p3*pow(forca,3) + p4*pow(forca,2) + p5*forca + p6;
+		return (unsigned char)(p1*pow(forca,3) + p2*pow(forca,2) + p3*forca + p4);
+
 }
 
 /** \brief Função principal do módulo de IO.
@@ -143,10 +157,11 @@ int setPointESC_Forca(float forca){
   * Loop que amostra sensores e escreve nos atuadores como necessário.
   *
   */
-unsigned char sp_right=10;
-unsigned char sp_left=10;
-bool trigger = true;
 
+//bool trigger = true;
+float altitude_sonar=0;
+float altitude_sonar_anterior=0;
+float altitude_sonar_filtrado=0;
 void module_io_run() 
 {
 	float accRaw[3], gyrRaw[3], magRaw[3];
@@ -154,8 +169,9 @@ void module_io_run()
 	float velAngular[3]={0,0,0};
 	int iterations=0;
 	int patrick=1;
+	float correcao_yaw=0;
 
-
+	// Deixar global?
 	pv_msg_io_actuation    actuation = {0,0.0f,0.0f,0.0f,0.0f};
 	pv_msg_datapr_attitude attitude  = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
 	pv_msg_datapr_attitude attitude_reference = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
@@ -176,9 +192,29 @@ void module_io_run()
 			//c_datapr_MahonyAHRSupdate(attitude_quaternion,gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
 			c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
 			c_io_imu_EulerMatrix(rpy, velAngular);
+
+			//SOMENTE PARA TESTES - mudando o yaw para o valor inicial ser 0
+			if (iterations < 500){
+				correcao_yaw = rpy[2];
+				first_pv_io = false;}
+
+			rpy[2]= rpy[2]-correcao_yaw;
 		#endif
 
 
+		/// SONAR
+		#if 1
+			//Get sonar value in cm
+			altitude_sonar = c_io_sonar_read()/100;//the altitude must be in meters
+
+			altitude_sonar_filtrado = 0.9277*altitude_sonar_filtrado + 0.03614*altitude_sonar + 0.03614*altitude_sonar_anterior;
+			altitude_sonar_anterior = altitude_sonar;
+
+			// Derivada = (dado_atual-dado_anterior )/(tempo entre medicoes)
+			position.dotZ = (altitude_sonar_filtrado - position.z)/MODULE_PERIOD;
+			position.z = altitude_sonar;
+			position_reference.z = 0.85;
+		#endif
 
 		/// DADOS OUT
 		oAttitude.roll     = rpy[PV_IMU_ROLL  ];
@@ -187,31 +223,39 @@ void module_io_run()
 		oAttitude.dotRoll  = rpy[PV_IMU_DROLL ];
 		oAttitude.dotPitch = rpy[PV_IMU_DPITCH];
 		oAttitude.dotYaw   = rpy[PV_IMU_DYAW  ];
-		oSensorTime.IMU_sample_time = MODULE_PERIOD/1000;
+//		oSensorTime.IMU_sample_time = MODULE_PERIOD/1000;
+		oSensorTime.IMU_sample_time = 0.005;
+
+
+
 
 		#if 1
 			iActuation = RC_controller(oAttitude,attitude_reference,position,position_reference,oSensorTime,1);
+			// Ajusta o eixo de referencia do servo (montado ao contrario)
+//			iActuation.servoLeft = -iActuation.servoLeft;
+			iActuation.servoLeft = -iActuation.servoLeft;
 		#endif
 
 		/// SERVOS
 		#if 1
 			if( (iActuation.servoRight*RAD_TO_DEG<70) && (iActuation.servoRight*RAD_TO_DEG>-70) )
-				c_io_rx24f_move(2, 150+iActuation.servoRight*RAD_TO_DEG);
+				c_io_rx24f_move(1, 150+iActuation.servoRight*RAD_TO_DEG);
 			if( (iActuation.servoLeft*RAD_TO_DEG<70) && (iActuation.servoLeft*RAD_TO_DEG>-70) )
-				c_io_rx24f_move(1, 130+iActuation.servoLeft*RAD_TO_DEG);
+				c_io_rx24f_move(2, 130+iActuation.servoLeft*RAD_TO_DEG);
 		#endif
 
 
 		// set points para os ESCs
 		/// ESCS
+			unsigned char sp_right;
+			unsigned char sp_left;
+			sp_right = setPointESC_Forca(iActuation.escRightSpeed);
+			sp_left = setPointESC_Forca(iActuation.escLeftSpeed);
 		#if 1
 
 		/*
 					iActuation.escRightSpeed = 8.0f;
 					iActuation.escLeftSpeed  = 8.0f;
-
-					sp_right = setPointESC_Forca(iActuation.escRightSpeed);
-					sp_left = setPointESC_Forca(iActuation.escLeftSpeed);
 
 					if ( (iActuation.escLeftSpeed > 50))
 					{
@@ -237,6 +281,9 @@ void module_io_run()
 					}
 		*/
 
+//			sp_right = setPointESC_Forca(iActuation.escRightSpeed);
+//			sp_left = setPointESC_Forca(iActuation.escLeftSpeed);
+
 			//taskENTER_CRITICAL();
 			// 100 iteracoes com a thread periodica de 10ms = 1segundo
 			if (iterations < 500)
@@ -247,20 +294,18 @@ void module_io_run()
 			}
 			else
 			{
-				c_io_blctrl_setSpeed(0, 15 );
+				c_io_blctrl_setSpeed(0, sp_right );
 				c_common_utils_delayus(10);
-				c_io_blctrl_setSpeed(1, 15 );
+				c_io_blctrl_setSpeed(1, sp_left );
 				//c_io_blctrl_updateBuffer(1);
+
+//				c_io_blctrl_setSpeed(0, 10 ); //right
+//				c_common_utils_delayus(10);
+//				c_io_blctrl_setSpeed(1, 0 );//left
 			}
 			//taskEXIT_CRITICAL();
 		#endif
-		
-		/// SONAR
-		#if 0
-			c_common_utils_floatToString(c_io_sonar_read(), r,  3);
-			sprintf(str, "Distance: %s \n\r",r );
-	    	c_common_usart_puts(USART2, str);
-    	#endif
+
 
 		/// DEBUG
 		#if 1
@@ -294,8 +339,8 @@ void module_io_run()
 				int scale=100;
 				sprintf(str,"%d  %d  %d | %d  | %d %d | %d %d \n\r",
 				(int)(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG),(int)(rpy[PV_IMU_PITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_YAW  ]*RAD_TO_DEG),
-				(int)c_io_sonar_read(),
-				(int)iActuation.escRightSpeed,(int)iActuation.escLeftSpeed,
+				(int)(altitude_sonar_filtrado*100),
+				(int)sp_left,(int)sp_right,
 				(int)(iActuation.servoRight*RAD_TO_DEG*scale),(int)(iActuation.servoLeft*RAD_TO_DEG*scale));
 				c_common_usart_puts(USART2, str);
 				#endif
