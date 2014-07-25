@@ -110,9 +110,10 @@ void module_rc_run() {
       oActuation.servoLeft = -oActuation.servoLeft;
 
       // Modulando sinal do ESC para testes
-//      oActuation.escLeftSpeed  = (oActuation.escLeftSpeed*throttle_control)/100;
-//      oActuation.escRightSpeed = (oActuation.escRightSpeed*throttle_control)/100;
-      //oActuation.escLeftSpeed  = throttle_control;
+      //oActuation.escLeftSpeed  = c_rc_receiver_getChannel(C_RC_CHANNEL_THROTTLE);
+      //oActuation.escRightSpeed = c_rc_receiver_getChannel(C_RC_CHANNEL_ROLL);
+      //oActuation.servoLeft = c_rc_receiver_getChannel(C_RC_CHANNEL_PITCH);
+      //oActuation.servoRight = c_rc_receiver_getChannel(C_RC_CHANNEL_YAW);
 
     #endif
     
@@ -129,10 +130,10 @@ void module_rc_run() {
     #endif
 
     #if 0
-      taskENTER_CRITICAL();
-      oActuation.servoRight = c_rc_receiver_getChannel(C_RC_CHANNEL_PITCH);
-      oActuation.servoLeft = 0;
-      taskEXIT_CRITICAL();
+      char str[356]={};
+      sprintf(str, "-----------------------------\n\rTHROTTLE: %d\n\rROLL: %d\n\rPITCH: %d\n\rYAW: %d\n\rA: %d\n\rB: %d,\n\rVR: %d\n\r" ,
+      (int)c_rc_receiver_getChannel(C_RC_CHANNEL_THROTTLE),(int)c_rc_receiver_getChannel(C_RC_CHANNEL_ROLL),(int)c_rc_receiver_getChannel(C_RC_CHANNEL_PITCH),(int)c_rc_receiver_getChannel(C_RC_CHANNEL_YAW),(int)c_rc_receiver_getChannel(C_RC_CHANNEL_A),(int)c_rc_receiver_getChannel(C_RC_CHANNEL_B),(int)c_rc_receiver_getChannel(C_RC_CHANNEL_VR));
+      c_common_usart_puts(USART2, str);
     #endif
 
 

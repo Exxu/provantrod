@@ -227,10 +227,12 @@ void module_io_run()
 			}
 			else
 			{
+				
 				c_io_blctrl_setSpeed(0, 15 );
 				c_common_utils_delayus(10);
 				c_io_blctrl_setSpeed(1, 15 );
 				c_io_blctrl_updateBuffer(1);
+				
 			}
 			//taskEXIT_CRITICAL();
 		#endif
@@ -245,7 +247,7 @@ void module_io_run()
 		/// DEBUG
 		#if 1
 	    	// multwii
-	    	#if 0
+	    	#if 1
 
 		    	c_common_datapr_multwii_bicopter_identifier();
 		    	c_common_datapr_multwii_motor_pins();
@@ -261,9 +263,10 @@ void module_io_run()
 	    	#else  
 	    	// serial
 	    	 	
-				sprintf(str, "imu ->%d %d-%d \t %d \t %d \t %d \t %d \t %d \t %d \t %d \t %d\n\r" ,(int)c_io_sonar_read(),c_io_blctrl_readSpeed(1),c_io_blctrl_read(1,3),patrick*10, (int)(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG),
-				(int)(rpy[PV_IMU_PITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_YAW  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_DROLL  ]*RAD_TO_DEG),
-				(int)(rpy[PV_IMU_DPITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_DYAW  ]*RAD_TO_DEG), iterations);
+				sprintf(str, "OUT ->%d\t%d\t%d\n\r",
+					(int)(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_PITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_YAW  ]*RAD_TO_DEG));
+				
+				
 
 				c_common_usart_puts(USART2, str);
 				

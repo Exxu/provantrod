@@ -25,12 +25,21 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define 	EXTI_PORT		EXTI_PortSourceGPIOG
-#define 	EXTI_SOURCE		EXTI_PinSource13		// PD5 na placa STM32F4-H407
-#define 	EXTI_LINE		EXTI_Line13				// Tem que ser a mesma do pino
+#ifdef STM32F4_H407
+	#define 	EXTI_PORT		EXTI_PortSourceGPIOG
+	#define 	EXTI_SOURCE		EXTI_PinSource13		// PD5 na placa STM32F4-H407
+	#define 	EXTI_LINE		EXTI_Line13				// Tem que ser a mesma do pino
+	#define 	EXTI_Chanell	EXTI_Line13				
+#elif STM32F4_DISCOVERY
+  	#define 	EXTI_PORT		EXTI_PortSourceGPIOE
+	#define 	EXTI_SOURCE		EXTI_PinSource7		    // PE7 na placa STM32F4-Discovery
+	#define 	EXTI_LINE		EXTI_Line7				// Tem que ser a mesma do pino
+	#define 	EXTI_Chanell	EXTI9_5_IRQn				
+#endif
+
 #define 	PULSE_INTERVAL 	400						// us
 #define 	SYNC_WIDTH		2500					// us
-#define	 	NUM_OF_CHANNELS 6
+#define	 	NUM_OF_CHANNELS 7
 
 #define 	RECV_MINIMUM	450   /** Largura mínima de um pulso válido */
 #define 	RECV_MAXIMUM	1800  /** Largura máxima de um pulso válido */
@@ -88,6 +97,7 @@ void c_rc_receiver_init() {
 	 for(int i=0; i<12; i++)
 		 channels[i] = 0;
 
+
 	 /* Enable SYSCFG clock */
 	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
 
@@ -105,9 +115,9 @@ void c_rc_receiver_init() {
 	 EXTI_Init(&EXTI_InitStructure);
 
 	 /* Enable and set EXTI Line Interrupt */
-	 NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
-	 NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;
-	 NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x01;
+	 NVIC_InitStructure.NVIC_IRQChannel = EXTI_Chanell; 
+	 NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	 NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
 	 NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	 NVIC_Init(&NVIC_InitStructure);
 
@@ -130,6 +140,29 @@ void c_rc_receiver_init() {
 	 c_rc_calibrateCenters();
 }
 
+
+void c_rc_receiver_init2() {
+  EXTI_InitTypeDef EXTI_InitStructure;
+  NVIC_InitTypeDef NVIC_InitStructure;
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
+  GPIO_Init(GPIOE, &GPIO_InitStructure);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+  SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOE, EXTI_PinSource5);
+  EXTI_InitStructure.EXTI_Line = EXTI_Line7;
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;  
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;//0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;//0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+}
+
 /** \brief Retorna a largura do pulso em \em us do canal selecionado.
   *
   * Retorna -1 caso o canal desejado não seja válido (por ex., não exista), ou se a largura
@@ -150,13 +183,25 @@ float  c_rc_receiver_getChannel(int channel_n) {
             706/1581            |        713/1542         |        692/1523       |       687/1513
     *****************************************************************************************************/
         if(channel_n==C_RC_CHANNEL_THROTTLE)
-            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 706, 1581, -100, +100);
+            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 706, 1581, +100, -100);
        	if(channel_n==C_RC_CHANNEL_ROLL)
             last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 713, 1542, -100, +100);
         if(channel_n==C_RC_CHANNEL_YAW)
             last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 692, 1523, -100, +100);
         if(channel_n==C_RC_CHANNEL_PITCH)
-            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 687, 1513, -100, +100);
+            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 687, 1513, +100, -100);
+        if(channel_n==C_RC_CHANNEL_VR)
+            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 564, 1672, 0,100);
+        if(channel_n==C_RC_CHANNEL_A)
+            if(channels[channel_n]>1000)
+            	channels[channel_n]=last_channels[channel_n] = 0;
+            else
+            	channels[channel_n]=last_channels[channel_n] = 1;
+        if(channel_n==C_RC_CHANNEL_B)
+            if(channels[channel_n]>1000)
+            	channels[channel_n]=last_channels[channel_n] = 0;
+            else
+            	channels[channel_n]=last_channels[channel_n] = 1;
 		return channels[channel_n];
 	}
 	else
@@ -231,6 +276,28 @@ void  EXTI15_10_IRQHandler()
 		}
 	}
 	TIM_SetCounter(TIM2, 0);
+}
+
+void  EXTI9_5_IRQHandler()
+{
+
+	EXTI_ClearITPendingBit(EXTI_LINE); // clear interrupt
+	int pulse_width = TIM_GetCounter(TIM2) - PULSE_INTERVAL;
+
+	if(pulse_width > SYNC_WIDTH) //sync pulse
+		channel_index = 0;
+	else {
+		if(channel_index < NUM_OF_CHANNELS) {
+			channels[channel_index] = pulse_width;
+			channel_index++;
+		}
+	}
+	TIM_SetCounter(TIM2, 0);
+	/*
+	char str[64]={};
+	sprintf(str, "INT--------------------------------%d,%d,%d,%d\n\r",channels[0],channels[1],channels[2],channels[3] );
+	c_common_usart_puts(USART2, str);
+	*/
 }
 
 /**
