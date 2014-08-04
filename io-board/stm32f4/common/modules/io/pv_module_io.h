@@ -22,13 +22,16 @@
  /** \brief Define que modulos serao utilizados.
     *
     * Se ENABLE_* 1 então tal modulo será utilizado
-    *
+    * Por enquanto prefere-se colocar 1 e 0 diretamente, mudar na fase final
     */
-#define ENABLE_IMU		1
-#define ENABLE_SERVO	0
-#define ENABLE_ESC		0
-#define ENABLE_SONAR	0
-#define ENALBE_DEBUG	1
+//#define ENABLE_IMU		1
+//#define ENABLE_SERVO	0
+//#define ENABLE_ESC		0
+//#define ENABLE_SONAR	0
+//#define ENALBE_DEBUG	1
+
+//numero de iteracoes para inicializar atuadores e sensores.
+#define INIT_ITERATIONS 500
 
 /* Includes ------------------------------------------------------------------*/
 

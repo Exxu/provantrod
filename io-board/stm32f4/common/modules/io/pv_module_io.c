@@ -31,9 +31,9 @@
 /* Private variables ---------------------------------------------------------*/
 portTickType lastWakeTime;
 //long last_IMU_time=0; /** Último valor do SysTick quando a função de leitura da IMU foi executada - para integracão numérica */
-bool first_pv_io = true; // Primeira iteracao do codigo
+bool first_pv_io = true; // true até a primeira leitura valida da imu
 char str[256];
-int counte=0;
+//int counte=0;
 
 GPIOPin LED_builtin_io;
 
@@ -125,30 +125,20 @@ long verifyOverflow(long int deltaT){
  * Curva retirada dos ensaios com os motores brushless no INEP
  */
 unsigned char setPointESC_Forca(float forca){
-//	Coefficientes do polinomio
-//	float p1 = -0.0013112;
-//	float p2 = 0.04625;
-//	float p3 = -0.50308;
-//	float p4 = 1.0065;
-//	float p5 = 23.443;
-//	float p6 = -3.254;
-//
-//	if (forca <= 0.18)
-//		return 1;
-//	else
-//		return p1*pow(forca,5) + p2*pow(forca,4) + p3*pow(forca,3) + p4*pow(forca,2) + p5*forca + p6;
+	//	Coefficients:
+	float p1 = 0.00088809;
+	float p2 = -0.039541;
+	float p3 = 0.67084;
+	float p4 = -5.2113;
+	float p5 = 16.33;
+	float p6 = 10.854;
+	float p7 = 3.0802;
 
-//	Coefficients:
-	float  p1 = 0.13104;
-	float  p2 = -2.9901;
-	float  p3 = 36.554;
-	float  p4 = -7.945;
-//forca = forca -6;
-	if (forca <= 0.23)
+	if (forca <= 0)
 		return (unsigned char)1;
 	else
-		return (unsigned char)(p1*pow(forca,3) + p2*pow(forca,2) + p3*forca + p4);
-
+		return (unsigned char)(p1*pow(forca,6) + p2*pow(forca,5) + p3*pow(forca,4) + p4*pow(forca,3)
+								+ p5*pow(forca,2) + p6*forca + p7);
 }
 
 /** \brief Função principal do módulo de IO.
@@ -158,12 +148,6 @@ unsigned char setPointESC_Forca(float forca){
   * Loop que amostra sensores e escreve nos atuadores como necessário.
   *
   */
-
-//unsigned char sp_right=10;
-//unsigned char sp_left=10;
-//bool trigger = true;
-
-//bool trigger = true;
 float altitude_sonar=0;
 float altitude_sonar_anterior=0;
 float altitude_sonar_filtrado=0;
@@ -174,7 +158,8 @@ void module_io_run()
 	float velAngular[3]={0,0,0};
 	int iterations=0;
 	int patrick=1;
-	float correcao_yaw=0;
+	int canalA=0;
+	float canalTHROTTLE=0;
 
 	// Deixar global?
 	pv_msg_io_actuation    actuation = {0,0.0f,0.0f,0.0f,0.0f};
@@ -185,12 +170,15 @@ void module_io_run()
 
 	while(1)
 	{
-		c_common_gpio_toggle(LED_builtin_io);
+//		c_common_gpio_toggle(LED_builtin_io);
 		lastWakeTime = xTaskGetTickCount();
 
-		xQueueReceive(pv_interface_io.iActuation, &iActuation, 0);
+//		xQueueReceive(pv_interface_io.iActuation, &iActuation, 0);
 
-		if (c_rc_receiver_getChannel(C_RC_CHANNEL_B))
+		canalA = (int)c_rc_receiver_getChannel(C_RC_CHANNEL_A);
+		canalTHROTTLE = (c_rc_receiver_getChannel(C_RC_CHANNEL_THROTTLE))/103;
+
+		if (canalA)
 			securityStop = 1;
 
 		/// IMU DATA
@@ -199,22 +187,16 @@ void module_io_run()
 			c_datapr_MahonyAHRSupdate(attitude_quaternion, velAngular, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
 			//c_datapr_MahonyAHRSupdate(attitude_quaternion,gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
 			c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
-			c_io_imu_EulerMatrix(rpy, velAngular);
+//			c_io_imu_EulerMatrix(rpy, velAngular); // velAngular é o dado raw do giro com filtro
+			c_io_imu_EulerMatrix(rpy,gyrRaw); //testando com o dado cru do giroscopio
 
-			if ( (rpy[2]*RAD_TO_DEG < -160) || (rpy[2]*RAD_TO_DEG > 160) )
+			if ( (rpy[2]*RAD_TO_DEG < -150) || (rpy[2]*RAD_TO_DEG > 150) )
 				securityStop=1;
-
-			//SOMENTE PARA TESTES - mudando o yaw para o valor inicial ser 0
-//			if (iterations < 500){
-//				correcao_yaw = rpy[2];
-//				first_pv_io = false;}
-//
-//			rpy[2]= rpy[2]-correcao_yaw;
 		#endif
 
 
 		/// SONAR
-		#if 1
+		#if 0
 			//Get sonar value in cm
 			altitude_sonar = c_io_sonar_read()/100;//the altitude must be in meters
 
@@ -224,7 +206,7 @@ void module_io_run()
 			// Derivada = (dado_atual-dado_anterior )/(tempo entre medicoes)
 			position.dotZ = (altitude_sonar_filtrado - position.z)/MODULE_PERIOD;
 			position.z = altitude_sonar;
-			position_reference.z = 0.85;
+			position_reference.z = 1.2;
 		#endif
 
 		/// DADOS OUT
@@ -237,31 +219,49 @@ void module_io_run()
 //		oSensorTime.IMU_sample_time = MODULE_PERIOD/1000;
 		oSensorTime.IMU_sample_time = 0.005;
 
+		// A referencia é a orientacao que o UAV é iniciado
+		if (iterations < INIT_ITERATIONS){
+			attitude_reference.roll  = rpy[PV_IMU_ROLL];
+			attitude_reference.pitch = rpy[PV_IMU_PITCH];
+			attitude_reference.yaw   = rpy[PV_IMU_YAW];
+		}
 
-
-
+		// CONTROLE
 		#if 1
-			iActuation = RC_controller(oAttitude,attitude_reference,position,position_reference,oSensorTime,1);
-			// Ajusta o eixo de referencia do servo (montado ao contrario)
-			iActuation.servoLeft = -iActuation.servoLeft;
+			if (iterations < INIT_ITERATIONS){
+				iActuation.escRightSpeed = 0;
+				iActuation.escLeftSpeed  = 0;
+				iActuation.servoRight    = 0;
+				iActuation.servoLeft     = 0;
+			}
+			else{
+					iActuation = RC_controller(oAttitude,attitude_reference,position,position_reference,oSensorTime,1);
+					// Ajusta o eixo de referencia do servo (montado ao contrario)
+					iActuation.servoLeft = -iActuation.servoLeft;
+				}
 		#endif
-
-		// Parada de emergencia caso o yaw chegue perto da descontinuidade - Bota todos atuadores para zeros
-		if (securityStop){
-			iActuation.servoLeft=0;
-			iActuation.servoRight=0;
-			iActuation.escLeftSpeed=0;
-			iActuation.escRightSpeed=0;}
 
 
 		/// SERVOS
 		#if 1
-
-			if( (iActuation.servoRight*RAD_TO_DEG<70) && (iActuation.servoRight*RAD_TO_DEG>-70) )
-				c_io_rx24f_move(1, 130+iActuation.servoRight*RAD_TO_DEG);
-			if( (iActuation.servoLeft*RAD_TO_DEG<70) && (iActuation.servoLeft*RAD_TO_DEG>-70) )
-				c_io_rx24f_move(2, 150+iActuation.servoLeft*RAD_TO_DEG);
-
+		// inicializacao
+			if (securityStop){
+				c_io_rx24f_move(1, 130+0);
+				c_io_rx24f_move(2, 150+0);
+			}
+			else{
+				if (iterations < 200)
+				{
+						c_io_rx24f_move(1, 130+0);
+						c_io_rx24f_move(2, 150+0);
+				}
+				else{
+					if( (iActuation.servoRight*RAD_TO_DEG<70) && (iActuation.servoRight*RAD_TO_DEG>-70) )
+						c_io_rx24f_move(1, 130+iActuation.servoRight*RAD_TO_DEG);
+					if( (iActuation.servoLeft*RAD_TO_DEG<70) && (iActuation.servoLeft*RAD_TO_DEG>-70) )
+						c_io_rx24f_move(2, 150+iActuation.servoLeft*RAD_TO_DEG);
+				}
+			}
 		#endif
 
 
@@ -269,57 +269,30 @@ void module_io_run()
 		/// ESCS
 			unsigned char sp_right;
 			unsigned char sp_left;
-			sp_right = setPointESC_Forca(iActuation.escRightSpeed);
-			sp_left = setPointESC_Forca(iActuation.escLeftSpeed);
-		#if 0
-
-		/*
-					iActuation.escRightSpeed = 8.0f;
-					iActuation.escLeftSpeed  = 8.0f;
-
-					if ( (iActuation.escLeftSpeed > 50))
-					{
-						if (trigger)
-						{
-							sp_right++;
-							sp_left++;
-						}
-					trigger = false;
-					}
-					else
-						trigger = true;
-
-
-					if ( (iActuation.escLeftSpeed < -50))
-					{
-						if ( trigger && (sp_right > 9) && (sp_left > 9))
-						{
-							sp_right--;
-							sp_left--;
-							trigger = false;
-						}
-					}
-		*/
-
-//			sp_right = setPointESC_Forca(iActuation.escRightSpeed);
-//			sp_left = setPointESC_Forca(iActuation.escLeftSpeed);
-
+			sp_right = setPointESC_Forca(iActuation.escRightSpeed*canalTHROTTLE);
+			sp_left = setPointESC_Forca(iActuation.escLeftSpeed*canalTHROTTLE);
+		#if 1
 			//taskENTER_CRITICAL();
-			// 100 iteracoes com a thread periodica de 10ms = 1segundo
-			if (iterations < 500)
-			{
-				c_io_blctrl_setSpeed(0, 10 );
+
+			if (securityStop){
+				c_io_blctrl_setSpeed(0, 0 );//sp_right
 				c_common_utils_delayus(10);
-				c_io_blctrl_setSpeed(1, 10 );
+				c_io_blctrl_setSpeed(1, 0 );//sp_left
 			}
-			else
-			{
-//				if(!securityStop){
-				c_io_blctrl_setSpeed(0, sp_right );//sp_right
-				c_common_utils_delayus(10);
-				c_io_blctrl_setSpeed(1, sp_left );//sp_left
-				//c_io_blctrl_updateBuffer(1);
-//				}
+			else{
+				//inicializacao
+				if (iterations < 200)
+				{
+					c_io_blctrl_setSpeed(0, 10 );
+					c_common_utils_delayus(10);
+					c_io_blctrl_setSpeed(1, 10 );
+				}
+				else
+				{
+					c_io_blctrl_setSpeed(0, sp_right );//sp_right
+					c_common_utils_delayus(10);
+					c_io_blctrl_setSpeed(1, sp_left );//sp_left
+				}
 			}
 			//taskEXIT_CRITICAL();
 		#endif
@@ -356,13 +329,12 @@ void module_io_run()
 				c_common_usart_puts(USART2, str);
 				#else
 				int scale=100;
-				sprintf(str,"%d  %d  %d | %d  | %d %d | %d %d | %d \n\r",
+				sprintf(str,"%d  %d  %d | %d %d | %d\n\r",
 				(int)(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG),(int)(rpy[PV_IMU_PITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_YAW  ]*RAD_TO_DEG),
-				(int)(altitude_sonar_filtrado*100),
-				(int)sp_right,(int)sp_left,
-				(int)(iActuation.servoRight*RAD_TO_DEG*scale),(int)(iActuation.servoLeft*RAD_TO_DEG*scale),
-				(int)securityStop);
+				(int)(iActuation.servoLeft*RAD_TO_DEG*scale),(int)(iActuation.servoRight*RAD_TO_DEG*scale),(int)(canalTHROTTLE*scale));
+//				taskENTER_CRITICAL();
 				c_common_usart_puts(USART2, str);
+//				taskEXIT_CRITICAL();
 				#endif
 
 				
@@ -371,11 +343,11 @@ void module_io_run()
 
 		iterations++;
 
-		if(pv_interface_io.oAttitude != 0){
-      		xQueueOverwrite(pv_interface_io.oAttitude, &oAttitude);
-      		xQueueOverwrite(pv_interface_io.oSensorTime, &oSensorTime);
-		}
-		c_common_gpio_toggle(LED_builtin_io);
+//		if(pv_interface_io.oAttitude != 0){
+//      		xQueueOverwrite(pv_interface_io.oAttitude, &oAttitude);
+//      		xQueueOverwrite(pv_interface_io.oSensorTime, &oSensorTime);
+//		}
+//		c_common_gpio_toggle(LED_builtin_io);
 		vTaskDelayUntil( &lastWakeTime, (MODULE_PERIOD / portTICK_RATE_MS));
 	}
 }
