@@ -71,6 +71,11 @@
 #define MSP_DEBUGMSG             253   //out message         debug string buffer
 #define MSP_DEBUG                254   //out message         debug1,debug2,debug3,debug4
 
+
+#define MSP_ESCDATA              99
+#define MSP_CONTROLDATAOUT       98
+#define MSP_CONTROLDATAIN        97
+
 /* Private variables ---------------------------------------------------------*/
 char multwii_msg[1024];
 
@@ -98,6 +103,7 @@ void c_common_datapr_multwii_motor(float forca_esquerdo,float forca_direito);
 void c_common_datapr_multwii_servos(float angle1,float angle2);
 void c_common_datapr_multwii_debug(float debug1,float  debug2,float  debug3,float debug4);
 void c_common_datapr_multwii_sendstack(USART_TypeDef* USARTx);
+void sendEscdata(int rpm[2],float current[2],float voltage[2]);
 
 #ifdef __cplusplus
 }

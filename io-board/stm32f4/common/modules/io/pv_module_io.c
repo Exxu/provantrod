@@ -39,6 +39,7 @@ GPIOPin LED_builtin_io;
 
 float attitude_quaternion[4]={1,0,0,0};
 int securityStop=0; //Promove uma parada de seguranca - desliga os atuadores
+int init=1; //Se 1 entao o UAV está em fase de inicializacao
 
 /* Inboxes buffers */
 pv_msg_io_actuation    iActuation;
@@ -78,8 +79,8 @@ void module_io_init()
 	c_common_utils_delayms(2);
 //	c_io_rx24f_setSpeed(1, 20);
 //	c_io_rx24f_setSpeed(2, 20);
-	c_io_rx24f_setSpeed(1, 100);
-	c_io_rx24f_setSpeed(2, 100);
+	c_io_rx24f_setSpeed(1, 50);
+	c_io_rx24f_setSpeed(2, 50);
 	c_common_utils_delayms(2);
 	/* CCW Compliance Margin e CCW Compliance margin */
 	c_io_rx24f_write(1, 0x1A,0x03);
@@ -153,7 +154,7 @@ float altitude_sonar_anterior=0;
 float altitude_sonar_filtrado=0;
 void module_io_run() 
 {
-	float accRaw[3], gyrRaw[3], magRaw[3];
+	float accRaw[3], gyrRaw[3], magRaw[3], gyrFiltrado[3]={0};
 	float rpy[] = {0,0,0,0,0,0};
 	float velAngular[3]={0,0,0};
 	int iterations=0;
@@ -181,17 +182,34 @@ void module_io_run()
 		if (canalA)
 			securityStop = 1;
 
+
+		if (iterations > INIT_ITERATIONS)
+			init = 0;
+
 		/// IMU DATA
 		#if 1
 		 	c_io_imu_getRaw(accRaw, gyrRaw, magRaw);
-			c_datapr_MahonyAHRSupdate(attitude_quaternion, velAngular, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
-			//c_datapr_MahonyAHRSupdate(attitude_quaternion,gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
+
+		 	if (!init)
+		 		c_datapr_setBetaOperational();
+
+//		 	gyrRaw[0]=gyrRaw[0]+2.5;
+//			c_datapr_MahonyAHRSupdate(attitude_quaternion, velAngular, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],-magRaw[1],-magRaw[2]);
+//			c_datapr_MahonyAHRSupdate(attitude_quaternion, velAngular, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
+		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
 			c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
+//			rpy[2]=0;
 //			c_io_imu_EulerMatrix(rpy, velAngular); // velAngular é o dado raw do giro com filtro
-			c_io_imu_EulerMatrix(rpy,gyrRaw); //testando com o dado cru do giroscopio
+//			gyrRaw[0]=gyrRaw[0]+2.5;
+			c_datapr_filter_gyro(gyrRaw, gyrFiltrado);
+//			gyrFiltrado[1] = c_datapr_filter_gyro(gyrRaw[1]);
+//			gyrFiltrado[2] = c_datapr_filter_gyro(gyrRaw[2]);
+//			c_io_imu_EulerMatrix(rpy,gyrRaw); //testando com o dado cru do giroscopio
+			c_io_imu_EulerMatrix(rpy,gyrFiltrado);
 
 			if ( (rpy[2]*RAD_TO_DEG < -150) || (rpy[2]*RAD_TO_DEG > 150) )
 				securityStop=1;
+
 		#endif
 
 
@@ -220,15 +238,15 @@ void module_io_run()
 		oSensorTime.IMU_sample_time = 0.005;
 
 		// A referencia é a orientacao que o UAV é iniciado
-		if (iterations < INIT_ITERATIONS){
-			attitude_reference.roll  = rpy[PV_IMU_ROLL];
-			attitude_reference.pitch = rpy[PV_IMU_PITCH];
+		if (init){
+//			attitude_reference.roll  = rpy[PV_IMU_ROLL];
+//			attitude_reference.pitch = rpy[PV_IMU_PITCH];
 			attitude_reference.yaw   = rpy[PV_IMU_YAW];
 		}
 
 		// CONTROLE
 		#if 1
-			if (iterations < INIT_ITERATIONS){
+			if (init){
 				iActuation.escRightSpeed = 0;
 				iActuation.escLeftSpeed  = 0;
 				iActuation.servoRight    = 0;
@@ -250,7 +268,7 @@ void module_io_run()
 				c_io_rx24f_move(2, 150+0);
 			}
 			else{
-				if (iterations < 200)
+				if (init)
 				{
 						c_io_rx24f_move(1, 130+0);
 						c_io_rx24f_move(2, 150+0);
@@ -281,7 +299,7 @@ void module_io_run()
 			}
 			else{
 				//inicializacao
-				if (iterations < 200)
+				if (init)
 				{
 					c_io_blctrl_setSpeed(0, 10 );
 					c_common_utils_delayus(10);
@@ -301,19 +319,35 @@ void module_io_run()
 		/// DEBUG
 		#if 1
 	    	// multwii
-	    	#if 0
+	    	#if 1
+			float accRaw_rad[3];
+			float gyrRaw_rad[3];
+			float gyrFiltrado_rad[3];
 
-		    	c_common_datapr_multwii_bicopter_identifier();
-		    	c_common_datapr_multwii_motor_pins();
-		    	c_common_datapr_multwii_motor(iActuation.escLeftSpeed+2,iActuation.escRightSpeed+2);
-		    	c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG, rpy[PV_IMU_YAW  ]*RAD_TO_DEG );
-		    	arm_scale_f32(accRaw,RAD_TO_DEG,accRaw,3);
-		    	arm_scale_f32(gyrRaw,RAD_TO_DEG,gyrRaw,3);
-		    	c_common_datapr_multwii_raw_imu(accRaw,gyrRaw,magRaw);
-		    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
-		    	c_common_datapr_multwii_debug(iActuation.escLeftSpeed,iActuation.escRightSpeed,iActuation.servoLeft*RAD_TO_DEG,iActuation.servoLeft*RAD_TO_DEG);
 
-		    	c_common_datapr_multwii_sendstack(USART2);
+//			for (int i=0;i<3;i++){
+//				if (magRaw[i] > MaxMag[i])
+//					MaxMag[i]= magRaw[i];
+//				else if (magRaw[i] < MinMag[i])
+//					MinMag[i]= magRaw[i];
+//			}
+
+
+	    	c_common_datapr_multwii_bicopter_identifier();
+	    	c_common_datapr_multwii_motor_pins();
+		    c_common_datapr_multwii_motor(sp_left,sp_right);
+	    	c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG, rpy[PV_IMU_YAW  ]*RAD_TO_DEG );
+	    	arm_scale_f32(accRaw,RAD_TO_DEG,accRaw_rad,3);
+	    	arm_scale_f32(gyrRaw,RAD_TO_DEG,gyrRaw_rad,3);
+
+	    	arm_scale_f32(gyrFiltrado,RAD_TO_DEG,gyrFiltrado_rad,3);
+//	    	gyrRaw_rad[1]=gyrFiltrado_rad[0];
+	    	c_common_datapr_multwii_raw_imu(gyrFiltrado_rad,gyrRaw_rad,magRaw);
+//	    	c_common_datapr_multwii_raw_imu(MaxMag,MinMag,magRaw);
+	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
+	    	c_common_datapr_multwii_debug(sp_left,sp_right,iActuation.servoLeft*RAD_TO_DEG,iActuation.servoLeft*RAD_TO_DEG);
+
+	    	c_common_datapr_multwii_sendstack(USART2);
 	    	#else  
 	    	// serial
 

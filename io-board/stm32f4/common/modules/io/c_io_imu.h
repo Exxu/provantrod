@@ -80,6 +80,7 @@ void c_io_imu_getKalmanFilterRPY(float * rpy, float * acce_raw, float * gyro_raw
 void c_io_imu_initKalmanFilter();
 void c_io_imu_calibrate();
 void c_io_imu_Quaternion2Euler(float * q, float * rpy);
+void c_io_imu_Quaternion2EulerMadgwick(float * q, float * rpy);
 void c_io_imu_EulerMatrix(float * rpy, float * velAngular);
 
 #ifdef __cplusplus

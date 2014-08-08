@@ -34,9 +34,9 @@
 
 /* Private define ------------------------------------------------------------*/
 
-#define sampleFreq	100.0f			// sample frequency in Hz
-#define twoKpDef	(2.0f * 3.0f)	// 2 * proportional gain
-#define twoKiDef	(2.0f * 0.2f)	// 2 * integral gain
+#define sampleFreq	200.0f			// sample frequency in Hz
+#define twoKpDef	(2.0f * 10.0f)	// 2 * proportional gain
+#define twoKiDef	(2.0f * 0.5f)	// 2 * integral gain
 
 /* Private variables ---------------------------------------------------------*/
 

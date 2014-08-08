@@ -220,8 +220,8 @@ void c_common_datapr_multwii_servos(float angle1,float angle2)
   serialize16(0);
   serialize16(0);
 
-  serialize16((int)(angle1));
-  serialize16((int)(angle2));
+  serialize16((int)(1500+8.333*angle1));
+  serialize16((int)(1500+8.333*angle2));
   serialize16(0);
   serialize16(0);
   tailSerialReply();
@@ -235,8 +235,8 @@ void c_common_datapr_multwii_servos(float angle1,float angle2)
 void c_common_datapr_multwii_motor(float forca_esquerdo,float forca_direito)
 {
   headSerialResponse(16, MSP_MOTOR);
-  serialize32_as16((int)((forca_esquerdo)));
-  serialize32_as16((int)((forca_direito)));
+  serialize32_as16((int)((forca_esquerdo*100)));
+  serialize32_as16((int)((forca_direito*100)));
   serialize32_as16(0);
   serialize32_as16(0);
 
@@ -271,6 +271,51 @@ void c_common_datapr_multwii_sendstack(USART_TypeDef* USARTx)
   get_raw_String(); // limpa a pilha;
 }
 
+void serializeFloat(float x)
+{
+  char * b = (char *) &x;
+  for (int i = 0; i < 4; ++i)
+    serialize8(b[i]);
+}
+
+
+void sendControldatain(float rpy[3],float drpy[3],float position[3],float velocity[3])
+{
+  headSerialResponse(48, MSP_CONTROLDATAIN);
+  for (int i = 0; i < 3; ++i)
+    serializeFloat(rpy[i]);
+  for (int i = 0; i < 3; ++i)
+    serializeFloat(drpy[i]);
+  for (int i = 0; i < 3; ++i)
+    serializeFloat(position[i]);
+  for (int i = 0; i < 3; ++i)
+    serializeFloat(velocity[i]);
+  tailSerialReply();
+}
+
+void sendControldataout(float servo[2],float esc[4])
+{
+  headSerialResponse(24, MSP_CONTROLDATAOUT);
+  serializeFloat(servo[0]);
+  serializeFloat(esc[0]);
+  serializeFloat(esc[1]);
+  serializeFloat(servo[1]);
+  serializeFloat(esc[2]);
+  serializeFloat(esc[3]);
+  tailSerialReply();
+}
+
+void sendEscdata(int rpm[2],float current[2],float voltage[2])
+{
+  headSerialResponse(20, MSP_ESCDATA);
+  for (int i = 0; i < 2; ++i)
+  {
+        serialize16(rpm[i]);
+        serializeFloat(current[i]);
+        serializeFloat(voltage[i]);
+  }
+  tailSerialReply();
+}
 /**
   * @}
   */

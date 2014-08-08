@@ -73,6 +73,16 @@ unsigned char MAGN_ID = 0;
 
 /* Exported functions definitions --------------------------------------------*/
 
+/** \brief Funcão que retorna o modulo do Valor. Implementada porque por motivos desconhecidos a funcão abs da lib do C não está
+ * funcionando.
+ * NÃO É GENËRICA! Aceita somente float.
+ */
+float abs2(float num){
+	if (num < 0)
+		return -num;
+	else
+		return num;
+}
 
 /** \brief Inicializa a IMU.
  *
@@ -198,11 +208,23 @@ void c_io_imu_getRaw(float  * accRaw, float * gyrRaw, float * magRaw) {
     -196/607 | -488/250 | -422/263
     ***********************************************/
 
+    // By Willians e Rodrigos
+//    X   |     Y    |     Z
+//---------|----------|----------------
+//-120/361 | -394/140 | -324/91
+//***********************************************/
+
     // -100/100
     
     magRaw[1] = (magRaw[1]-(250-488)/2)/3.69;
     magRaw[0] = (magRaw[0]-(607-196)/2)/4.015;
     magRaw[2] = (magRaw[2]-(263-422)/2)/3.425;
+
+
+//        magRaw[0] = 1160.0/abs2((magRaw[0]-(361-120)/2));
+//        magRaw[1] = 1160.0/abs2((magRaw[1]-(140-394)/2));
+//        magRaw[2] = 1080.0/abs2((magRaw[2]-(91-324)/2));
+
 //	magRaw[1] = (magRaw[1]-(250-488)/2);
 //	magRaw[0] = (magRaw[0]-(607-196)/2);
 //	magRaw[2] = (magRaw[2]-(263-422)/2);
@@ -245,16 +267,7 @@ void c_io_imu_getRaw(float  * accRaw, float * gyrRaw, float * magRaw) {
 
 }
 
-/** \brief Funcão que retorna o modulo do Valor. Implementada porque por motivos desconhecidos a funcão abs da lib do C não está
- * funcionando.
- * NÃO É GENËRICA! Aceita somente float.
- */
-float abs2(float num){
-	if (num < 0)
-		return -num;
-	else
-		return num;
-}
+
 
 
 
@@ -322,6 +335,34 @@ void c_io_imu_Quaternion2Euler(float * q, float * rpy){
 //}
 
 
+/**\brief Quaternion para Euler
+ * Solucao adaptada de http://www.x-io.co.uk/res/doc/madgwick_internal_report.pdf, "An efficient orientation filter for inertial and
+inertial/magnetic sensor arrays" escrito por Sebastian O.H. Madgwick, página 6, equacoes (7)(8)(9).
+ *
+ * @param quaternion
+ * @param angulo euler
+ */
+void c_io_imu_Quaternion2EulerMadgwick(float * q, float * rpy){
+
+	float singularity_check = 2*(q[1]*q[3] + q[0]*q[2]);
+
+	if (singularity_check > 0.499) { // singularity at north pole
+		rpy[0] = 0;
+		rpy[1] = - PI/2;
+		rpy[2] = 2 * atan2(q[1],q[0]);
+		return;
+	}
+	if (singularity_check < -0.499) { // singularity at south pole
+		rpy[0] = 0;
+		rpy[1] =  PI/2;
+		rpy[2] = -2 * atan2(q[1],q[0]);
+		return;
+	}
+
+	rpy[0]=atan2(2*(q[2]*q[3] - q[0]*q[1]) , 2*(q[0]*q[0] + q[3]*q[3] -0.5));
+	rpy[1]=-asin(singularity_check);
+	rpy[2]=atan2(2*(q[1]*q[2] -q[0]*q[3]) , 2*(q[0]*q[0] +q[1]*q[1] -0.5));
+}
 /* IRQ handlers ------------------------------------------------------------- */
 
 /**

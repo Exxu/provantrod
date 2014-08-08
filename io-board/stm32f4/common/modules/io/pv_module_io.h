@@ -31,7 +31,7 @@
 //#define ENALBE_DEBUG	1
 
 //numero de iteracoes para inicializar atuadores e sensores.
-#define INIT_ITERATIONS 500
+#define INIT_ITERATIONS 1000
 
 /* Includes ------------------------------------------------------------------*/
 
@@ -56,9 +56,14 @@
 
 #include "pv_typedefs.h"
 #include "c_datapr_MultWii.h"
-#include "c_datapr_MahonyAHRS.h"
 
+ /* Filtros Complementares */
 #include "c_datapr_MahonyAHRS.h"
+#include "c_datapr_MadgwickAHRS.h"
+
+/* Filtro */
+#include "c_datapr_filter.h"
+
 
 /* Exported types ------------------------------------------------------------*/
 
