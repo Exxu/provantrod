@@ -45,28 +45,52 @@
 #define PV_IMU_Y           1
 #define PV_IMU_Z           2
 
-/* Dados do Giroscopio encontrados experimentalmente pelo metodo da variancia de allan */
-#define POL_GYRO_X		   	-0.051135
-#define POL_GYRO_Y		   	-0.014749
-#define POL_GYRO_Z			0.0095847
-#define VAR_POL_GYRO_X		0.00000000056929960
-#define VAR_POL_GYRO_Y		0.00000000099609672
-#define VAR_POL_GYRO_Z		0.0000000000083024651
-#define VAR_GYRO_X			0.000000020733120
-#define VAR_GYRO_Y			0.000000019290432
-#define VAR_GYRO_Z			0.000000115015940
-
- /* Dados do Acelerometro encontrados experimentalmente pelo metodo da variancia de allan */
-#define VAR_ACCL_X			0.00000355775044
-#define VAR_ACCL_Y			0.00000414651769
-#define VAR_ACCL_Z			0.00001150159396
-
- /* Dados do Magnetometro encontrados experimentalmente pelo metodo da variancia de allan */
-#define VAR_MAGN_X			0.2951857561 // ou  0.0763637956
-#define VAR_MAGN_Y			0.1793861316 // ou  0.0522899689
-#define VAR_MAGN_Z			4.40454169   // ou  1.0497846681
-
+//Gravidade
 #define G				   	9.81 //Ver se nao esta definindo denovo
+
+/* Offset Giroscopio*/
+#define OFFSET_GYRO_X		   	-0.051979079497908
+#define OFFSET_GYRO_Y		   	-0.012014143530644
+#define OFFSET_GYRO_Z			0.009635983263598
+
+ // Accelerometer
+ // "accel x,y,z (min/max) = X_MIN/X_MAX Y_MIN/Y_MAX Z_MIN/Z_MAX *1000"
+ #define ACCEL_X_MIN ((float) -1074)
+ #define ACCEL_X_MAX ((float) 988)
+ #define ACCEL_Y_MIN ((float) -1015)
+ #define ACCEL_Y_MAX ((float) 1040)
+ #define ACCEL_Z_MIN ((float) -1097)
+ #define ACCEL_Z_MAX ((float) 890)
+ // Magnetometer (standard calibration mode)
+ // "magn x,y,z (min/max) = X_MIN/X_MAX Y_MIN/Y_MAX Z_MIN/Z_MAX"
+ #define MAGN_X_MIN ((float) -600)
+ #define MAGN_X_MAX ((float) 600)
+ #define MAGN_Y_MIN ((float) -600)
+ #define MAGN_Y_MAX ((float) 600)
+ #define MAGN_Z_MIN ((float) -600)
+ #define MAGN_Z_MAX ((float) 600)
+ // Magnetometer (extended calibration mode)
+ // Uncommend to use extended magnetometer calibration (compensates hard & soft iron errors)
+ //const float magn_ellipsoid_center[3] = {0, 0, 0};
+ //const float magn_ellipsoid_transform[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+
+ // Sensor calibration scale and offset values
+ #define ACCEL_X_OFFSET ((ACCEL_X_MIN + ACCEL_X_MAX) / 2000.0f)
+ #define ACCEL_Y_OFFSET ((ACCEL_Y_MIN + ACCEL_Y_MAX) / 2000.0f)
+ #define ACCEL_Z_OFFSET ((ACCEL_Z_MIN + ACCEL_Z_MAX) / 2000.0f)
+ #define ACCEL_X_SCALE (G / (ACCEL_X_MAX - ACCEL_X_OFFSET))
+ #define ACCEL_Y_SCALE (G / (ACCEL_Y_MAX - ACCEL_Y_OFFSET))
+ #define ACCEL_Z_SCALE (G / (ACCEL_Z_MAX - ACCEL_Z_OFFSET))
+
+ #define MAGN_X_OFFSET ((MAGN_X_MIN + MAGN_X_MAX) / 2.0f)
+ #define MAGN_Y_OFFSET ((MAGN_Y_MIN + MAGN_Y_MAX) / 2.0f)
+ #define MAGN_Z_OFFSET ((MAGN_Z_MIN + MAGN_Z_MAX) / 2.0f)
+ #define MAGN_X_SCALE (100.0f / (MAGN_X_MAX - MAGN_X_OFFSET))
+ #define MAGN_Y_SCALE (100.0f / (MAGN_Y_MAX - MAGN_Y_OFFSET))
+ #define MAGN_Z_SCALE (100.0f / (MAGN_Z_MAX - MAGN_Z_OFFSET))
+
+
+
 
 /* Exported macro ------------------------------------------------------------*/
 #define C_IO_IMU_USE_ITG_ADXL_HMC

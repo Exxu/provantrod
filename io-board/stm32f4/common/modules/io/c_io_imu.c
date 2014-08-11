@@ -187,6 +187,7 @@ void c_io_imu_getRaw(float  * accRaw, float * gyrRaw, float * magRaw) {
   	gyrRaw[1] =  (int16_t)((imuBuffer[3] | (imuBuffer[2] << 8)))*gyrScale;
   	gyrRaw[2] =  (int16_t)((imuBuffer[5] | (imuBuffer[4] << 8)))*gyrScale;
 
+
     // Read x, y, z from magnetometer;
 #ifdef ENABLE_PREEMPT
 	taskENTER_CRITICAL();
@@ -229,6 +230,18 @@ void c_io_imu_getRaw(float  * accRaw, float * gyrRaw, float * magRaw) {
 //	magRaw[0] = (magRaw[0]-(607-196)/2);
 //	magRaw[2] = (magRaw[2]-(263-422)/2);
 
+
+
+  	/*------ Apply calibration -----*/
+    //Gyro
+//  	gyrRaw[0]=gyrRaw[0]-OFFSET_GYRO_X;
+//  	gyrRaw[1]=gyrRaw[1]-OFFSET_GYRO_Y;
+//  	gyrRaw[2]=gyrRaw[2]-OFFSET_GYRO_Z;
+//
+//  	//Acce
+//  	accRaw[0] = (accRaw[0] - ACCEL_X_OFFSET) * ACCEL_X_SCALE;
+//  	accRaw[1] = (accRaw[1] - ACCEL_Y_OFFSET) * ACCEL_Y_SCALE;
+//  	accRaw[2] = (accRaw[2] - ACCEL_Z_OFFSET) * ACCEL_Z_SCALE;
 
 #endif
 

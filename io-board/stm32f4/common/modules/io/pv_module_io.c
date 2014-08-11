@@ -77,10 +77,10 @@ void module_io_init()
 	/* Inicializar os servos */
 	c_io_rx24f_init(1000000);
 	c_common_utils_delayms(2);
-//	c_io_rx24f_setSpeed(1, 20);
-//	c_io_rx24f_setSpeed(2, 20);
-	c_io_rx24f_setSpeed(1, 50);
-	c_io_rx24f_setSpeed(2, 50);
+//	c_io_rx24f_setSpeed(1, 50);
+//	c_io_rx24f_setSpeed(2, 50);
+	c_io_rx24f_setSpeed(1, 200);
+	c_io_rx24f_setSpeed(2, 200);
 	c_common_utils_delayms(2);
 	/* CCW Compliance Margin e CCW Compliance margin */
 	c_io_rx24f_write(1, 0x1A,0x03);
@@ -193,19 +193,14 @@ void module_io_run()
 		 	if (!init)
 		 		c_datapr_setBetaOperational();
 
-//		 	gyrRaw[0]=gyrRaw[0]+2.5;
-//			c_datapr_MahonyAHRSupdate(attitude_quaternion, velAngular, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],-magRaw[1],-magRaw[2]);
-//			c_datapr_MahonyAHRSupdate(attitude_quaternion, velAngular, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
-		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
+//		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
+		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
 			c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
-//			rpy[2]=0;
-//			c_io_imu_EulerMatrix(rpy, velAngular); // velAngular é o dado raw do giro com filtro
-//			gyrRaw[0]=gyrRaw[0]+2.5;
-			c_datapr_filter_gyro(gyrRaw, gyrFiltrado);
+//			c_datapr_filter_gyro(gyrRaw, gyrFiltrado);
 //			gyrFiltrado[1] = c_datapr_filter_gyro(gyrRaw[1]);
 //			gyrFiltrado[2] = c_datapr_filter_gyro(gyrRaw[2]);
-//			c_io_imu_EulerMatrix(rpy,gyrRaw); //testando com o dado cru do giroscopio
-			c_io_imu_EulerMatrix(rpy,gyrFiltrado);
+			c_io_imu_EulerMatrix(rpy,gyrRaw); //testando com o dado cru do giroscopio
+//			c_io_imu_EulerMatrix(rpy,gyrFiltrado);
 
 			if ( (rpy[2]*RAD_TO_DEG < -150) || (rpy[2]*RAD_TO_DEG > 150) )
 				securityStop=1;
@@ -218,11 +213,11 @@ void module_io_run()
 			//Get sonar value in cm
 			altitude_sonar = c_io_sonar_read()/100;//the altitude must be in meters
 
-			altitude_sonar_filtrado = 0.9277*altitude_sonar_filtrado + 0.03614*altitude_sonar + 0.03614*altitude_sonar_anterior;
-			altitude_sonar_anterior = altitude_sonar;
+//			altitude_sonar_filtrado = 0.9277*altitude_sonar_filtrado + 0.03614*altitude_sonar + 0.03614*altitude_sonar_anterior;
+//			altitude_sonar_anterior = altitude_sonar;
 
 			// Derivada = (dado_atual-dado_anterior )/(tempo entre medicoes)
-			position.dotZ = (altitude_sonar_filtrado - position.z)/MODULE_PERIOD;
+			position.dotZ = (altitude_sonar - position.z)/MODULE_PERIOD;
 			position.z = altitude_sonar;
 			position_reference.z = 1.2;
 		#endif
@@ -320,32 +315,29 @@ void module_io_run()
 		#if 1
 	    	// multwii
 	    	#if 1
-			float accRaw_rad[3];
 			float gyrRaw_rad[3];
 			float gyrFiltrado_rad[3];
-
-
-//			for (int i=0;i<3;i++){
-//				if (magRaw[i] > MaxMag[i])
-//					MaxMag[i]= magRaw[i];
-//				else if (magRaw[i] < MinMag[i])
-//					MinMag[i]= magRaw[i];
-//			}
-
+			float accRaw_scaled[3];
 
 	    	c_common_datapr_multwii_bicopter_identifier();
 	    	c_common_datapr_multwii_motor_pins();
 		    c_common_datapr_multwii_motor(sp_left,sp_right);
 	    	c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG, rpy[PV_IMU_YAW  ]*RAD_TO_DEG );
-	    	arm_scale_f32(accRaw,RAD_TO_DEG,accRaw_rad,3);
+
 	    	arm_scale_f32(gyrRaw,RAD_TO_DEG,gyrRaw_rad,3);
 
+//	    	arm_scale_f32(accRaw,1000,accRaw_scaled,3);
 	    	arm_scale_f32(gyrFiltrado,RAD_TO_DEG,gyrFiltrado_rad,3);
 //	    	gyrRaw_rad[1]=gyrFiltrado_rad[0];
-	    	c_common_datapr_multwii_raw_imu(gyrFiltrado_rad,gyrRaw_rad,magRaw);
+	    	c_common_datapr_multwii_raw_imu(accRaw,gyrRaw_rad,magRaw);
 //	    	c_common_datapr_multwii_raw_imu(MaxMag,MinMag,magRaw);
-	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
+//	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
+	    	c_common_datapr_multwii_servos(altitude_sonar,altitude_sonar);
+
+
 	    	c_common_datapr_multwii_debug(sp_left,sp_right,iActuation.servoLeft*RAD_TO_DEG,iActuation.servoLeft*RAD_TO_DEG);
+
+
 
 	    	c_common_datapr_multwii_sendstack(USART2);
 	    	#else  
@@ -363,12 +355,9 @@ void module_io_run()
 				c_common_usart_puts(USART2, str);
 				#else
 				int scale=100;
-				sprintf(str,"%d  %d  %d | %d %d | %d\n\r",
-				(int)(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG),(int)(rpy[PV_IMU_PITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_YAW  ]*RAD_TO_DEG),
-				(int)(iActuation.servoLeft*RAD_TO_DEG*scale),(int)(iActuation.servoRight*RAD_TO_DEG*scale),(int)(canalTHROTTLE*scale));
-//				taskENTER_CRITICAL();
+				sprintf(str,"%d  %d  %d\n\r",
+				(int)(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG),(int)(rpy[PV_IMU_PITCH  ]*RAD_TO_DEG), (int)(rpy[PV_IMU_YAW  ]*RAD_TO_DEG));
 				c_common_usart_puts(USART2, str);
-//				taskEXIT_CRITICAL();
 				#endif
 
 				

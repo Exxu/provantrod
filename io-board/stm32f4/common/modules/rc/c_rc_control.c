@@ -53,10 +53,10 @@
 // PID controller gains
 #if 1
 	#define KPPHI    100.0f
-	#define KVPHI    15.0f
+	#define KVPHI    20.0f
 	#define KIPHI	 10.0f
 	#define KPTHETA  100.0f
-	#define KVTHETA  15.0f
+	#define KVTHETA  10.0f
 	#define KITHETA	 10.0f
 	#define KPPSI    100.0f
 	#define KVPSI    15.0f
