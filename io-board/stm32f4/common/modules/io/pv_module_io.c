@@ -202,8 +202,8 @@ void module_io_run()
 			c_io_imu_EulerMatrix(rpy,gyrRaw); //testando com o dado cru do giroscopio
 //			c_io_imu_EulerMatrix(rpy,gyrFiltrado);
 
-			if ( (rpy[2]*RAD_TO_DEG < -150) || (rpy[2]*RAD_TO_DEG > 150) )
-				securityStop=1;
+//			if ( (rpy[2]*RAD_TO_DEG < -150) || (rpy[2]*RAD_TO_DEG > 150) )
+//				securityStop=1;
 
 		#endif
 

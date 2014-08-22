@@ -51,7 +51,7 @@
 /* Private define ------------------------------------------------------------*/
 
 // PID controller gains
-#if 1
+#if 0
 	#define KPPHI    100.0f
 	#define KVPHI    20.0f
 	#define KIPHI	 10.0f
@@ -65,14 +65,14 @@
 	#define KPZ		 0.0f
 #else
 	#define KPPHI    100.0f
-	#define KVPHI    12.5f
-	#define KIPHI	 10.0f
+	#define KVPHI    10.0f
+	#define KIPHI	 3.0f
 	#define KPTHETA  100.0f
-	#define KVTHETA  12.5f
-	#define KITHETA	 10.0f
+	#define KVTHETA  10.0f
+	#define KITHETA	 3.0f
 	#define KPPSI    100.0f
-	#define KVPSI    12.5f
-	#define KIPSI	 10.0f
+	#define KVPSI    0.0f
+	#define KIPSI	 0.0f
 	#define KVZ		 0.0f
 	#define KPZ		 0.0f
 #endif
