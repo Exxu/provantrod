@@ -81,13 +81,18 @@
 #define G   9.81f //gravity
 
 // Aircraft parameters
-#define M    1.672f   // mass kg
+//#define M    1.672f   // mass kg
+#define M    2.0f   // mass kg
 #define L    0.27023f // aircraft's arm length. Y-axis distance between center of rotation(B) and rotor center of mass.
-#define H    0.03349f // center of mass displacement in Z-axis
+#define H    0.05081997f // center of mass displacement in Z-axis
 // Aircraft's Moments of Inertia km*m²
 #define IXX  0.01905797115f
 #define IYY  0.00502396129f
 #define IZZ  0.01859602726f
+//#define IXX  0.04138582f
+//#define IYY  0.01139674f
+//#define IZZ  0.03765757f
+
 
 // Reference filter parameters
 //#define REFERENCE_FILTER_POLE	40
