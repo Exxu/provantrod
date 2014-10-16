@@ -323,6 +323,7 @@ void module_io_run()
 	    	c_common_datapr_multwii_motor_pins();
 		    c_common_datapr_multwii_motor(sp_left,sp_right);
 	    	c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG, rpy[PV_IMU_YAW  ]*RAD_TO_DEG );
+//		    c_common_datapr_multwii_attitude(15, 10, -24 );
 
 	    	arm_scale_f32(gyrRaw,RAD_TO_DEG,gyrRaw_rad,3);
 

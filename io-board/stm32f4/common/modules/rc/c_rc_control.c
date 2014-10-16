@@ -51,7 +51,7 @@
 /* Private define ------------------------------------------------------------*/
 
 // PID controller gains
-#if 0
+#if 1
 	#define KPPHI    100.0f
 	#define KVPHI    20.0f
 	#define KIPHI	 10.0f
@@ -64,15 +64,15 @@
 	#define KVZ		 0.0f
 	#define KPZ		 0.0f
 #else
-	#define KPPHI    100.0f
+	#define KPPHI    68.0f
 	#define KVPHI    10.0f
 	#define KIPHI	 3.0f
-	#define KPTHETA  100.0f
+	#define KPTHETA  68.0f
 	#define KVTHETA  10.0f
 	#define KITHETA	 3.0f
-	#define KPPSI    100.0f
-	#define KVPSI    0.0f
-	#define KIPSI	 0.0f
+	#define KPPSI    68.0f
+	#define KVPSI    10.0f
+	#define KIPSI	 3.0f
 	#define KVZ		 0.0f
 	#define KPZ		 0.0f
 #endif
@@ -81,15 +81,28 @@
 #define G   9.81f //gravity
 
 // Aircraft parameters
-//#define M    1.672f   // mass kg
-#define M    2.0f   // mass kg
 #define L    0.27023f // aircraft's arm length. Y-axis distance between center of rotation(B) and rotor center of mass.
-#define H    0.05081997f // center of mass displacement in Z-axis
+
+// Antigo
+#define M    1.672f   // mass kg
+#define H    0.03349f // center of mass displacement in Z-axis
 // Aircraft's Moments of Inertia km*m²
 #define IXX  0.01905797115f
 #define IYY  0.00502396129f
 #define IZZ  0.01859602726f
-//#define IXX  0.04138582f
+
+// Eixo B
+//#define M    2.0f   // mass kg
+//#define M 	 1.77991770f
+//#define H    0.02732f // center of mass displacement in Z-axis
+//#define IXX  0.04271922f
+//#define IYY  0.00814083f
+//#define IZZ  0.03766127f
+
+//IMU
+//#define M    2.0f   // mass kg
+//#define H    0.05081997f // center of mass displacement in Z-axis
+//#define IXX  0.04599649f
 //#define IYY  0.01139674f
 //#define IZZ  0.03765757f
 
