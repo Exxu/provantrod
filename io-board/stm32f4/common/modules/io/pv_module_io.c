@@ -193,8 +193,8 @@ void module_io_run()
 		 	if (!init)
 		 		c_datapr_setBetaOperational();
 
-//		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
-		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
+		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
+//		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
 			c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
 //			c_datapr_filter_gyro(gyrRaw, gyrFiltrado);
 //			gyrFiltrado[1] = c_datapr_filter_gyro(gyrRaw[1]);
