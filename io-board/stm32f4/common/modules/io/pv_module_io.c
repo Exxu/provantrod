@@ -154,7 +154,7 @@ float altitude_sonar_anterior=0;
 float altitude_sonar_filtrado=0;
 void module_io_run() 
 {
-	float accRaw[3], gyrRaw[3], magRaw[3], gyrFiltrado[3]={0};
+	float accRaw[3], gyrRaw[3], magRaw[3], gyrFiltrado[3]={0}, accFiltrado[3];
 	float rpy[] = {0,0,0,0,0,0};
 	float velAngular[3]={0,0,0};
 	int iterations=0;
@@ -193,10 +193,14 @@ void module_io_run()
 		 	if (!init)
 		 		c_datapr_setBetaOperational();
 
+//		 	c_datapr_filter_gyro(gyrRaw, gyrFiltrado);
+//		 	c_datapr_filter_acc(accRaw, accFiltrado);
+//		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrFiltrado[0],gyrFiltrado[1],gyrFiltrado[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
 		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
 //		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
+//		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accFiltrado[0],accFiltrado[1],accFiltrado[2],magRaw[0],magRaw[1],magRaw[2]);
 			c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
-//			c_datapr_filter_gyro(gyrRaw, gyrFiltrado);
+
 //			gyrFiltrado[1] = c_datapr_filter_gyro(gyrRaw[1]);
 //			gyrFiltrado[2] = c_datapr_filter_gyro(gyrRaw[2]);
 			c_io_imu_EulerMatrix(rpy,gyrRaw); //testando com o dado cru do giroscopio
@@ -269,10 +273,12 @@ void module_io_run()
 						c_io_rx24f_move(2, 150+0);
 				}
 				else{
-					if( (iActuation.servoRight*RAD_TO_DEG<70) && (iActuation.servoRight*RAD_TO_DEG>-70) )
-						c_io_rx24f_move(1, 130+iActuation.servoRight*RAD_TO_DEG);
-					if( (iActuation.servoLeft*RAD_TO_DEG<70) && (iActuation.servoLeft*RAD_TO_DEG>-70) )
-						c_io_rx24f_move(2, 150+iActuation.servoLeft*RAD_TO_DEG);
+//					if( (iActuation.servoRight*RAD_TO_DEG<70) && (iActuation.servoRight*RAD_TO_DEG>-70) )
+//						c_io_rx24f_move(1, 130+iActuation.servoRight*RAD_TO_DEG);
+//					if( (iActuation.servoLeft*RAD_TO_DEG<70) && (iActuation.servoLeft*RAD_TO_DEG>-70) )
+//						c_io_rx24f_move(2, 150+iActuation.servoLeft*RAD_TO_DEG);
+					c_io_rx24f_move(1, 130+0);
+									c_io_rx24f_move(2, 150+0);
 				}
 			}
 		#endif
@@ -318,19 +324,21 @@ void module_io_run()
 			float gyrRaw_rad[3];
 			float gyrFiltrado_rad[3];
 			float accRaw_scaled[3];
+			float accFiltrado_scaled[3];
 
 	    	c_common_datapr_multwii_bicopter_identifier();
 	    	c_common_datapr_multwii_motor_pins();
 		    c_common_datapr_multwii_motor(sp_left,sp_right);
 	    	c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG, rpy[PV_IMU_YAW  ]*RAD_TO_DEG );
-//		    c_common_datapr_multwii_attitude(15, 10, -24 );
 
 	    	arm_scale_f32(gyrRaw,RAD_TO_DEG,gyrRaw_rad,3);
+	    	arm_scale_f32(accRaw,1000,accRaw_scaled,3);
+//	    	arm_scale_f32(accFiltrado,1000,accFiltrado_scaled,3);
+//	    	arm_scale_f32(gyrFiltrado,RAD_TO_DEG,gyrFiltrado_rad,3);
 
-//	    	arm_scale_f32(accRaw,1000,accRaw_scaled,3);
-	    	arm_scale_f32(gyrFiltrado,RAD_TO_DEG,gyrFiltrado_rad,3);
 //	    	gyrRaw_rad[1]=gyrFiltrado_rad[0];
-	    	c_common_datapr_multwii_raw_imu(accRaw,gyrRaw_rad,magRaw);
+//	    	c_common_datapr_multwii_raw_imu(accRaw_scaled,gyrRaw_rad,accFiltrado_scaled);
+	    	c_common_datapr_multwii_raw_imu(accRaw_scaled,gyrRaw_rad,magRaw);
 //	    	c_common_datapr_multwii_raw_imu(MaxMag,MinMag,magRaw);
 //	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
 	    	c_common_datapr_multwii_servos(altitude_sonar,altitude_sonar);

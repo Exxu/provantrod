@@ -37,6 +37,16 @@ float raw_gyro_memory_Y[8]={0};
 float raw_gyro_memory_Z[8]={0};
 //***************************************************************************
 
+//************** Memoria para o filtro do acelerometro ************************
+float filtered_acc_memory_X[2]={0};
+float filtered_acc_memory_Y[2]={0};
+float filtered_acc_memory_Z[2]={0};
+
+float raw_acc_memory_X[2]={0};
+float raw_acc_memory_Y[2]={0};
+float raw_acc_memory_Z[2]={0};
+//***************************************************************************
+
 //************** Memoria para o filtro do Sonar ************************
 float filtered_sonar_memory[2]={0};
 float raw_sonar_memory[2]={0};
@@ -60,33 +70,8 @@ int c_datapr_filter_gyro(float *raw_gyro, float *sinal_filtrado){
 
 //	float sinal_filtrado[3]={0}; //resultado do filtro
 
-	#if defined FILTER_GYRO_BAND_BUTTER_4OD
-//		y = 3.754*filtered_gyro_memory[0] -5.296*filtered_gyro_memory[1] +3.328509382430800*filtered_gyro_memory[2]-0.786698128410561*filtered_gyro_memory[3]
-//				-0.01282*raw_gyro_memory[1] +0.006412*raw_gyro_memory[3] +0.006412*raw_gyro;
 
-		y = 3.754353653929880*filtered_gyro_memory[0] -5.296176152097898*filtered_gyro_memory[1] +3.329*filtered_gyro_memory[2]-0.7867*filtered_gyro_memory[3]
-						-0.012824387489899*raw_gyro_memory[1] +0.006412193744950*raw_gyro_memory[3] +0.006412193744950*raw_gyro;
-
-		filtered_gyro_memory[0]=y;
-		filtered_gyro_memory[1]=filtered_gyro_memory[0];
-		filtered_gyro_memory[2]=filtered_gyro_memory[1];
-		filtered_gyro_memory[3]=filtered_gyro_memory[2];
-
-		raw_gyro_memory[0]=raw_gyro;
-		raw_gyro_memory[1]=raw_gyro_memory[0];
-		raw_gyro_memory[2]=raw_gyro_memory[1];
-		raw_gyro_memory[3]=raw_gyro_memory[2];
-
-	#elif defined FILTER_GYRO_BAND_BUTTER_2OD
-		y = 1.51*filtered_gyro_memory[0] -0.51*filtered_gyro_memory[1] -0.243*raw_gyro_memory[1] +0.243*raw_gyro;
-
-		filtered_gyro_memory[0]=y;
-		filtered_gyro_memory[1]=filtered_gyro_memory[0];
-
-		raw_gyro_memory[0]=raw_gyro;
-		raw_gyro_memory[1]=raw_gyro_memory[0];
-
-	#elif defined FILTER_GYRO_LOW_BUTTER_1OD
+	#if defined FILTER_GYRO_LOW_BUTTER_1OD
 		//Eixo X
 		sinal_filtrado[0] = 0.50954*filtered_gyro_memory_X[0] +0.24523*raw_gyro_memory_X[0] +0.24523*raw_gyro[0];
 		filtered_gyro_memory_X[0]=sinal_filtrado[0];
@@ -109,37 +94,30 @@ int c_datapr_filter_gyro(float *raw_gyro, float *sinal_filtrado){
 		raw_gyro_memory_X[0]=raw_gyro[0];
 
 		//Eixo Y
-		sinal_filtrado[1] = 0.854080685463467*filtered_gyro_memory_X[1] +0.072959657268267*raw_gyro_memory_X[1] +0.072959657268267*raw_gyro[1];
-		filtered_gyro_memory_X[1]=sinal_filtrado[1];
-		raw_gyro_memory_X[1]=raw_gyro[1];
+		sinal_filtrado[1] = 0.854080685463467*filtered_gyro_memory_Y[0] +0.072959657268267*raw_gyro_memory_Y[0] +0.072959657268267*raw_gyro[1];
+		filtered_gyro_memory_Y[0]=sinal_filtrado[1];
+		raw_gyro_memory_Y[0]=raw_gyro[1];
 
 		//Eixo Z
-		sinal_filtrado[2] = 0.854080685463467*filtered_gyro_memory_X[2] +0.072959657268267*raw_gyro_memory_X[2] +0.072959657268267*raw_gyro[2];
-		filtered_gyro_memory_X[2]=sinal_filtrado[2];
-		raw_gyro_memory_X[2]=raw_gyro[2];
+		sinal_filtrado[2] = 0.854080685463467*filtered_gyro_memory_Z[0] +0.072959657268267*raw_gyro_memory_Z[0] +0.072959657268267*raw_gyro[2];
+		filtered_gyro_memory_Z[0]=sinal_filtrado[2];
+		raw_gyro_memory_Z[0]=raw_gyro[2];
 
 	#elif defined FILTER_GYRO_LOW_BUTTER_1OD_10HZ
 		//Eixo X
-//		sinal_filtrado[0] = 0.726542528005361*filtered_gyro_memory_X[0] +0.136728735997319*raw_gyro_memory_X[0] +0.136728735997319*raw_gyro[0];
-//		filtered_gyro_memory_X[0]=sinal_filtrado[0];
-//		raw_gyro_memory_X[0]=raw_gyro[0];
-		sinal_filtrado[0] = raw_gyro[0];
+		sinal_filtrado[0] = 0.726542528005361*filtered_gyro_memory_X[0] +0.136728735997319*raw_gyro_memory_X[0] +0.136728735997319*raw_gyro[0];
+		filtered_gyro_memory_X[0]=sinal_filtrado[0];
+		raw_gyro_memory_X[0]=raw_gyro[0];
 
 		//Eixo Y
-//		sinal_filtrado[1] = 0.726542528005361*filtered_gyro_memory_X[1] +0.136728735997319*raw_gyro_memory_X[1] +0.136728735997319*raw_gyro[1];
-//		filtered_gyro_memory_X[1]=sinal_filtrado[1];
-//		raw_gyro_memory_X[1]=raw_gyro[1];
-
-		//Eixo Y - 30Hz
-		sinal_filtrado[1] = 0.324919696232906*filtered_gyro_memory_X[1] +0.337540151883547*raw_gyro_memory_X[1] +0.337540151883547*raw_gyro[1];
+		sinal_filtrado[1] = 0.726542528005361*filtered_gyro_memory_X[1] +0.136728735997319*raw_gyro_memory_X[1] +0.136728735997319*raw_gyro[1];
 		filtered_gyro_memory_X[1]=sinal_filtrado[1];
 		raw_gyro_memory_X[1]=raw_gyro[1];
 
 		//Eixo Z
-//		sinal_filtrado[2] = 0.726542528005361*filtered_gyro_memory_X[2] +0.136728735997319*raw_gyro_memory_X[2] +0.136728735997319*raw_gyro[2];
-//		filtered_gyro_memory_X[2]=sinal_filtrado[2];
-//		raw_gyro_memory_X[2]=raw_gyro[2];
-		sinal_filtrado[2] = raw_gyro[2];
+		sinal_filtrado[2] = 0.726542528005361*filtered_gyro_memory_X[2] +0.136728735997319*raw_gyro_memory_X[2] +0.136728735997319*raw_gyro[2];
+		filtered_gyro_memory_X[2]=sinal_filtrado[2];
+		raw_gyro_memory_X[2]=raw_gyro[2];
 
 	#elif defined FILTER_GYRO_BAND_BUTTER_6OD
 
@@ -231,6 +209,59 @@ sinal_filtrado[2] = 6.398795086770444*filtered_gyro_memory_Z[0] -18.056234987997
 	#endif
 
 //	return y;
+	return 0;
+}
+
+
+int c_datapr_filter_acc(float *raw_acc, float *sinal_filtrado){
+
+//	float sinal_filtrado[3]={0}; //resultado do filtro
+
+//	 0.005543 s^2 + 0.01109 s + 0.005543
+//	  -----------------------------------
+//	        s^2 - 1.779 s + 0.8008
+	#if defined FILTER_ACC_LOW_BUTTER_2OD_5HZ
+	//Eixo X
+	sinal_filtrado[0] = 1.778631777824585*filtered_acc_memory_X[0] - 0.800802646665708*filtered_acc_memory_X[1] + 0.005542717210281*raw_acc_memory_X[1]+
+			+  0.011085434420561*raw_acc_memory_X[0] + 0.005542717210281*raw_acc[0];
+
+	filtered_acc_memory_X[1]=filtered_acc_memory_X[0];
+	filtered_acc_memory_X[0]=sinal_filtrado[0];
+
+	raw_acc_memory_X[1]=raw_acc_memory_X[0];
+	raw_acc_memory_X[0]=raw_acc[0];
+
+//	//Eixo Y
+//	sinal_filtrado[1] = 1.561018075800718*filtered_acc_memory_Y[0] - 0.641351538057563*filtered_acc_memory_Y[1] + 0.020083365564211*raw_acc_memory_Y[1]+
+//			+ 0.040166731128423*raw_acc_memory_Y[0] + 0.020083365564211*raw_acc[1];
+//	filtered_acc_memory_Y[1]=filtered_acc_memory_Y[0];
+//	filtered_acc_memory_Y[0]=sinal_filtrado[1];
+//
+//	raw_acc_memory_Y[1]=raw_acc_memory_Y[0];
+//	raw_acc_memory_Y[0]=raw_acc[1];
+//
+//	//Eixo Z
+//	sinal_filtrado[2] = 1.561018075800718*filtered_acc_memory_Z[0] - 0.641351538057563*filtered_acc_memory_Z[1] + 0.020083365564211*raw_acc_memory_Z[1]+
+//			+ 0.040166731128423*raw_acc_memory_Z[0] + 0.020083365564211*raw_acc[2];
+//	filtered_acc_memory_Z[1]=filtered_acc_memory_Z[0];
+//	filtered_acc_memory_Z[0]=sinal_filtrado[2];
+//
+//	raw_acc_memory_Z[1]=raw_acc_memory_Z[0];
+//	raw_acc_memory_Z[0]=raw_acc[2];
+	sinal_filtrado[1]=raw_acc[1];
+	sinal_filtrado[2]=raw_acc[2];
+
+	#elif defined FILTER_ACC_BAND_BUTTER_2OD_5HZ
+		return 0;
+
+	#else
+		sinal_filtrado[0]=raw_acc[0];
+		sinal_filtrado[1]=raw_acc[1];
+		sinal_filtrado[2]=raw_acc[2];
+
+	#endif
+
+	//	return y;
 	return 0;
 }
 
