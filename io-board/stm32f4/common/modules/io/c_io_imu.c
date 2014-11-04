@@ -65,6 +65,9 @@ unsigned char ACCL_ID = 0;
 unsigned char GYRO_ID = 0;
 unsigned char MAGN_ID = 0;
 
+const float mag_ellipsoid_center[3] = {79.8977, -113.117, -136.064};
+const float mag_ellipsoid_transform[3][3] = {{0.792428, -0.00418974, 0.00504922}, {-0.00418974, 0.841005, -0.0430735}, {0.00504922, -0.0430735, 0.988147}};
+
 /* Private function prototypes -----------------------------------------------*/
 
 //void c_io_imu_Euler2Quaternion(float * rpy, float * q);
@@ -112,6 +115,11 @@ void c_io_imu_init(I2C_TypeDef* I2Cx)
   // configure the B register to default value of Sensor Input Field Range: 1.2Ga
   // +/- 1.2Ga <-> +/- 2047
   c_common_i2c_writeByte(I2Cx_imu, MAGN_ADDR, 0x01, 0x20);
+
+//	#ifdef CALIBRATION__MAGN_USE_EXTENDED
+//		arm_mat_init_f32(&magn_ellipsoid_transform, 3, 1, (float32_t *)magn_ellipsoid_transform_f32);
+//	#endif
+
 #endif
 
 #ifdef C_IO_IMU_USE_MPU6050_HMC5883 //Inicialização para a IMU baseada na MPU6050
@@ -143,6 +151,18 @@ void c_io_imu_init(I2C_TypeDef* I2Cx)
  * @param sample_time Periodo de amostragem da IMU. Tempo entre a última aquisicão e a atual.
  */
 void c_io_imu_getRaw(float  * accRaw, float * gyrRaw, float * magRaw) {
+
+//#ifdef CALIBRATION__MAGN_USE_EXTENDED
+//	float32_t mag_tmp_f32[3]={0}; // used as intermediate variable for matrices operations
+//	arm_matrix_instance_f32 mag_tmp_matrix;
+//	arm_matrix_instance_f32 magRaw_matrix;
+//
+//	arm_mat_init_f32(&mag_tmp_matrix, 3, 1, (float32_t *)mag_tmp_f32);
+//	arm_mat_init_f32(&magRaw_matrix, 3, 1, (float32_t *)magRaw);
+//
+//#endif
+
+float mag_tmp[3]={0};
 
 #ifdef C_IO_IMU_USE_ITG_ADXL_HMC
     // Read x, y, z acceleration, pack the data.
@@ -208,40 +228,34 @@ void c_io_imu_getRaw(float  * accRaw, float * gyrRaw, float * magRaw) {
     ---------|----------|----------------
     -196/607 | -488/250 | -422/263
     ***********************************************/
-
-    // By Willians e Rodrigos
-//    X   |     Y    |     Z
-//---------|----------|----------------
-//-120/361 | -394/140 | -324/91
-//***********************************************/
-
-    // -100/100
     
-    magRaw[1] = (magRaw[1]-(250-488)/2)/3.69;
-    magRaw[0] = (magRaw[0]-(607-196)/2)/4.015;
-    magRaw[2] = (magRaw[2]-(263-422)/2)/3.425;
+//    magRaw[1] = (magRaw[1]-(250-488)/2)/3.69;
+//    magRaw[0] = (magRaw[0]-(607-196)/2)/4.015;
+//    magRaw[2] = (magRaw[2]-(263-422)/2)/3.425;
 
-
-//        magRaw[0] = 1160.0/abs2((magRaw[0]-(361-120)/2));
-//        magRaw[1] = 1160.0/abs2((magRaw[1]-(140-394)/2));
-//        magRaw[2] = 1080.0/abs2((magRaw[2]-(91-324)/2));
-
-//	magRaw[1] = (magRaw[1]-(250-488)/2);
-//	magRaw[0] = (magRaw[0]-(607-196)/2);
-//	magRaw[2] = (magRaw[2]-(263-422)/2);
-
-
-
-  	/*------ Apply calibration -----*/
-    //Gyro
-//  	gyrRaw[0]=gyrRaw[0]-OFFSET_GYRO_X;
-//  	gyrRaw[1]=gyrRaw[1]-OFFSET_GYRO_Y;
-//  	gyrRaw[2]=gyrRaw[2]-OFFSET_GYRO_Z;
-//
-//  	//Acce
-//  	accRaw[0] = (accRaw[0] - ACCEL_X_OFFSET) * ACCEL_X_SCALE;
-//  	accRaw[1] = (accRaw[1] - ACCEL_Y_OFFSET) * ACCEL_Y_SCALE;
-//  	accRaw[2] = (accRaw[2] - ACCEL_Z_OFFSET) * ACCEL_Z_SCALE;
+  #ifdef CALIBRATE
+    // Compensate accelerometer error
+    accRaw[0] = (accRaw[0] - ACCEL_X_OFFSET) * ACCEL_X_SCALE;
+    accRaw[1] = (accRaw[1] - ACCEL_Y_OFFSET) * ACCEL_Y_SCALE;
+    accRaw[2] = (accRaw[2] - ACCEL_Z_OFFSET) * ACCEL_Z_SCALE;
+    // Compensate magnetometer error
+    #ifdef CALIBRATION__MAGN_USE_EXTENDED
+		for (int i = 0; i < 3; i++)
+			mag_tmp[i] = magRaw[i] - mag_ellipsoid_center[i];
+//		Matrix_Vector_Multiply(magn_ellipsoid_transform, mag_tmp, magRaw);
+		magRaw[0] = mag_ellipsoid_transform[0][0]*mag_tmp[0] + mag_ellipsoid_transform[0][1]*mag_tmp[1] + mag_ellipsoid_transform[0][2]*mag_tmp[2];
+		magRaw[1] = mag_ellipsoid_transform[1][0]*mag_tmp[0] + mag_ellipsoid_transform[1][1]*mag_tmp[1] + mag_ellipsoid_transform[1][2]*mag_tmp[2];
+		magRaw[2] = mag_ellipsoid_transform[2][0]*mag_tmp[0] + mag_ellipsoid_transform[2][1]*mag_tmp[1] + mag_ellipsoid_transform[2][2]*mag_tmp[2];
+    #else
+		magRaw[0] = (magRaw[0] - MAGN_X_OFFSET) * MAGN_X_SCALE;
+		magRaw[1] = (magRaw[1] - MAGN_Y_OFFSET) * MAGN_Y_SCALE;
+		magRaw[2] = (magRaw[2] - MAGN_Z_OFFSET) * MAGN_Z_SCALE;
+    #endif
+    // Compensate gyroscope error
+    gyrRaw[0] -= OFFSET_GYRO_X;
+    gyrRaw[1] -= OFFSET_GYRO_Y;
+    gyrRaw[2] -= OFFSET_GYRO_Z;
+  #endif
 
 #endif
 
@@ -322,13 +336,13 @@ void c_io_imu_Quaternion2Euler(float * q, float * rpy){
     float sqz = q[3]*q[3];
 	float singularity_check = (q[1]*q[3] - q[0]*q[2]);
 
-	if (singularity_check > 0.499) { // singularity at north pole
+	if (singularity_check > 0.49) { // singularity at north pole
 		rpy[0] = 0;
 		rpy[1] = - PI/2;
 		rpy[2] = 2 * atan2(q[1],q[0]);
 		return;
 	}
-	if (singularity_check < -0.499) { // singularity at south pole
+	if (singularity_check < -0.49) { // singularity at south pole
 		rpy[0] = 0;
 		rpy[1] =  PI/2;
 		rpy[2] = -2 * atan2(q[1],q[0]);

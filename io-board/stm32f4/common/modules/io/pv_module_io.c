@@ -196,10 +196,11 @@ void module_io_run()
 //		 	c_datapr_filter_gyro(gyrRaw, gyrFiltrado);
 //		 	c_datapr_filter_acc(accRaw, accFiltrado);
 //		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrFiltrado[0],gyrFiltrado[1],gyrFiltrado[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
-		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
-//		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
+//		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
+		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
 //		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accFiltrado[0],accFiltrado[1],accFiltrado[2],magRaw[0],magRaw[1],magRaw[2]);
-			c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
+//		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, 0,0,0,accRaw[0],accRaw[1],accRaw[2],0,0,0);
+		 	c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
 
 //			gyrFiltrado[1] = c_datapr_filter_gyro(gyrRaw[1]);
 //			gyrFiltrado[2] = c_datapr_filter_gyro(gyrRaw[2]);

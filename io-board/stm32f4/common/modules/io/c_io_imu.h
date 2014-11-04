@@ -55,32 +55,28 @@
 
  // Accelerometer
  // "accel x,y,z (min/max) = X_MIN/X_MAX Y_MIN/Y_MAX Z_MIN/Z_MAX *1000"
- #define ACCEL_X_MIN ((float) -1074)
- #define ACCEL_X_MAX ((float) 988)
- #define ACCEL_Y_MIN ((float) -1015)
- #define ACCEL_Y_MAX ((float) 1040)
- #define ACCEL_Z_MIN ((float) -1097)
- #define ACCEL_Z_MAX ((float) 890)
+ #define ACCEL_X_MIN ((float) -1.074)
+ #define ACCEL_X_MAX ((float) 0.988)
+ #define ACCEL_Y_MIN ((float) -1.015)
+ #define ACCEL_Y_MAX ((float) 1.040)
+ #define ACCEL_Z_MIN ((float) -1.097)
+ #define ACCEL_Z_MAX ((float) 0.890)
  // Magnetometer (standard calibration mode)
  // "magn x,y,z (min/max) = X_MIN/X_MAX Y_MIN/Y_MAX Z_MIN/Z_MAX"
- #define MAGN_X_MIN ((float) -600)
- #define MAGN_X_MAX ((float) 600)
- #define MAGN_Y_MIN ((float) -600)
- #define MAGN_Y_MAX ((float) 600)
- #define MAGN_Z_MIN ((float) -600)
- #define MAGN_Z_MAX ((float) 600)
- // Magnetometer (extended calibration mode)
- // Uncommend to use extended magnetometer calibration (compensates hard & soft iron errors)
- //const float magn_ellipsoid_center[3] = {0, 0, 0};
- //const float magn_ellipsoid_transform[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+ #define MAGN_X_MIN ((float) -247)
+ #define MAGN_X_MAX ((float) 379)
+ #define MAGN_Y_MIN ((float) -461)
+ #define MAGN_Y_MAX ((float) 161)
+ #define MAGN_Z_MIN ((float) -380)
+ #define MAGN_Z_MAX ((float) 105)
 
  // Sensor calibration scale and offset values
- #define ACCEL_X_OFFSET ((ACCEL_X_MIN + ACCEL_X_MAX) / 2000.0f)
- #define ACCEL_Y_OFFSET ((ACCEL_Y_MIN + ACCEL_Y_MAX) / 2000.0f)
- #define ACCEL_Z_OFFSET ((ACCEL_Z_MIN + ACCEL_Z_MAX) / 2000.0f)
- #define ACCEL_X_SCALE (G / (ACCEL_X_MAX - ACCEL_X_OFFSET))
- #define ACCEL_Y_SCALE (G / (ACCEL_Y_MAX - ACCEL_Y_OFFSET))
- #define ACCEL_Z_SCALE (G / (ACCEL_Z_MAX - ACCEL_Z_OFFSET))
+ #define ACCEL_X_OFFSET ((ACCEL_X_MIN + ACCEL_X_MAX) / 2.0f)
+ #define ACCEL_Y_OFFSET ((ACCEL_Y_MIN + ACCEL_Y_MAX) / 2.0f)
+ #define ACCEL_Z_OFFSET ((ACCEL_Z_MIN + ACCEL_Z_MAX) / 2.0f)
+ #define ACCEL_X_SCALE (1 / (ACCEL_X_MAX - ACCEL_X_OFFSET))
+ #define ACCEL_Y_SCALE (1 / (ACCEL_Y_MAX - ACCEL_Y_OFFSET))
+ #define ACCEL_Z_SCALE (1 / (ACCEL_Z_MAX - ACCEL_Z_OFFSET))
 
  #define MAGN_X_OFFSET ((MAGN_X_MIN + MAGN_X_MAX) / 2.0f)
  #define MAGN_Y_OFFSET ((MAGN_Y_MIN + MAGN_Y_MAX) / 2.0f)
@@ -88,6 +84,13 @@
  #define MAGN_X_SCALE (100.0f / (MAGN_X_MAX - MAGN_X_OFFSET))
  #define MAGN_Y_SCALE (100.0f / (MAGN_Y_MAX - MAGN_Y_OFFSET))
  #define MAGN_Z_SCALE (100.0f / (MAGN_Z_MAX - MAGN_Z_OFFSET))
+
+ // define to use the calibration data. If not defined then the raw values of the sensors are used
+// #define CALIBRATE
+ #define CALIBRATION__MAGN_USE_EXTENDED
+//float mag_ellipsoid_center[3] = {79.8977, -113.117, -136.064};
+//const float mag_ellipsoid_transform[3][3] = {{0.792428, -0.00418974, 0.00504922}, {-0.00418974, 0.841005, -0.0430735}, {0.00504922, -0.0430735, 0.988147}};
+//arm_matrix_instance_f32 magn_ellipsoid_transform;
 
 
 
