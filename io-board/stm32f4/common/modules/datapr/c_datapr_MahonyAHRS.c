@@ -35,8 +35,8 @@
 /* Private define ------------------------------------------------------------*/
 
 #define sampleFreq	200.0f			// sample frequency in Hz
-#define twoKpDef	(2.0f * 10.0f)	// 2 * proportional gain
-#define twoKiDef	(2.0f * 0.5f)	// 2 * integral gain
+#define twoKpDef	(2.0f * 15.0f)	// 2 * proportional gain
+#define twoKiDef	(2.0f * 0.1f)	// 2 * integral gain
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -69,7 +69,7 @@ float invSqrt(float x);
  * @param mz medida magnetometro eixo Z
  */
 
-void c_datapr_MahonyAHRSupdate(float * q, float * velAngular_corrigida, float gx, float gy, float gz, float ax, float ay, float az,
+void c_datapr_MahonyAHRSupdate(float * q, float gx, float gy, float gz, float ax, float ay, float az,
 								float mx, float my, float mz) {
 	float recipNorm;
     float q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;  
@@ -81,7 +81,7 @@ void c_datapr_MahonyAHRSupdate(float * q, float * velAngular_corrigida, float gx
 
 	// Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
 	if((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
-		c_datapr_MahonyAHRSupdateIMU(q, velAngular_corrigida, gx, gy, gz, ax, ay, az);
+		c_datapr_MahonyAHRSupdateIMU(q, gx, gy, gz, ax, ay, az);
 		return;
 	}
 
@@ -120,6 +120,12 @@ void c_datapr_MahonyAHRSupdate(float * q, float * velAngular_corrigida, float gx
         bx = sqrt(hx * hx + hy * hy);
         bz = 2.0f * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5f - q1q1 - q2q2));
 
+//		hx = mx * q0q0 - 2*q0*my * q3 + 2*q0*mz * q2 + mx * q1q1 + 2*q1 * my * q2 + 2*q1 * mz * q3 - mx * q2q2 - mx * q3q3;
+//		hy = 2*q0*mx * q3 + my * q0q0 - 2*q0*mz * q1 + 2*q1*mx * q2 - my * q1q1 + my * q2q2 + 2*q2 * mz * q3 - my * q3q3;
+//		bx = sqrt(hx * hx + hy * hy)/2;
+//		bz = - q0*mx*q2 + q0*my*q1 + mz*q0q0*0.5 + q1*mx*q3 - mz*q1q1*0.5 + q2*my*q3 - mz*q2q2*0.5 + mz*q3q3*0.5;
+
+
 		// Estimated direction of gravity and magnetic field
 		halfvx = q1q3 - q0q2;
 		halfvy = q0q1 + q2q3;
@@ -148,10 +154,10 @@ void c_datapr_MahonyAHRSupdate(float * q, float * velAngular_corrigida, float gx
 			integralFBz = 0.0f;
 		}
 
-		// Giros menos o bias, saida da funcao da velocidade angular corrigida
-		velAngular_corrigida[0] = gx;
-		velAngular_corrigida[1] = gy;
-		velAngular_corrigida[2] = gz;
+//		// Giros menos o bias, saida da funcao da velocidade angular corrigida
+//		velAngular_corrigida[0] = gx;
+//		velAngular_corrigida[1] = gy;
+//		velAngular_corrigida[2] = gz;
 
 		// Apply proportional feedback
 		gx += twoKp * halfex;
@@ -201,7 +207,7 @@ void c_datapr_MahonyAHRSupdate(float * q, float * velAngular_corrigida, float gx
  * @param az medida acelerometro eixo Z
  */
 
-void c_datapr_MahonyAHRSupdateIMU(float * q, float * velAngular_corrigida, float gx, float gy, float gz, float ax, float ay, float az) {
+void c_datapr_MahonyAHRSupdateIMU(float * q, float gx, float gy, float gz, float ax, float ay, float az) {
 	float recipNorm;
 	float halfvx, halfvy, halfvz;
 	float halfex, halfey, halfez;
@@ -244,10 +250,10 @@ void c_datapr_MahonyAHRSupdateIMU(float * q, float * velAngular_corrigida, float
 			integralFBz = 0.0f;
 		}
 
-		// Giros menos o bias, saida da funcao da velocidade angular corrigida
-		velAngular_corrigida[0] = gx;
-		velAngular_corrigida[1] = gy;
-		velAngular_corrigida[2] = gz;
+//		// Giros menos o bias, saida da funcao da velocidade angular corrigida
+//		velAngular_corrigida[0] = gx;
+//		velAngular_corrigida[1] = gy;
+//		velAngular_corrigida[2] = gz;
 
 		// Apply proportional feedback
 		gx += twoKp * halfex;

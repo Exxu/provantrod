@@ -38,9 +38,10 @@ char str[256];
 GPIOPin LED_builtin_io;
 
 float attitude_quaternion[4]={1,0,0,0};
+float attitude_quaternion_yaw[4]={1,0,0,0};
 int securityStop=0; //Promove uma parada de seguranca - desliga os atuadores
 int init=1; //Se 1 entao o UAV está em fase de inicializacao
-
+float max_acce[3]={-10000, -10000, -10000}, min_acce[3]={10000,10000,10000};
 /* Inboxes buffers */
 pv_msg_io_actuation    iActuation;
 
@@ -156,6 +157,7 @@ void module_io_run()
 {
 	float accRaw[3], gyrRaw[3], magRaw[3], gyrFiltrado[3]={0}, accFiltrado[3];
 	float rpy[] = {0,0,0,0,0,0};
+	float rpy_yaw[] = {0,0,0};
 	float velAngular[3]={0,0,0};
 	int iterations=0;
 	int patrick=1;
@@ -196,11 +198,15 @@ void module_io_run()
 //		 	c_datapr_filter_gyro(gyrRaw, gyrFiltrado);
 //		 	c_datapr_filter_acc(accRaw, accFiltrado);
 //		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrFiltrado[0],gyrFiltrado[1],gyrFiltrado[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
-//		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
-		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
+		 	c_datapr_MahonyAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
+//		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
 //		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accFiltrado[0],accFiltrado[1],accFiltrado[2],magRaw[0],magRaw[1],magRaw[2]);
 //		 	c_datapr_MadgwickAHRSupdate(attitude_quaternion, 0,0,0,accRaw[0],accRaw[1],accRaw[2],0,0,0);
+//		 	c_datapr_MahonyAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
+//		 	c_datapr_MahonyAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
 		 	c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
+//		 	c_io_imu_Quaternion2Euler(attitude_quaternion_yaw, rpy_yaw);
+//		 	rpy[2]=rpy_yaw[2];
 
 //			gyrFiltrado[1] = c_datapr_filter_gyro(gyrRaw[1]);
 //			gyrFiltrado[2] = c_datapr_filter_gyro(gyrRaw[2]);
@@ -256,6 +262,8 @@ void module_io_run()
 					iActuation = RC_controller(oAttitude,attitude_reference,position,position_reference,oSensorTime,1);
 					// Ajusta o eixo de referencia do servo (montado ao contrario)
 					iActuation.servoLeft = -iActuation.servoLeft;
+
+
 				}
 		#endif
 
@@ -324,28 +332,49 @@ void module_io_run()
 	    	#if 1
 			float gyrRaw_rad[3];
 			float gyrFiltrado_rad[3];
-			float accRaw_scaled[3];
+//			float accRaw_scaled[3];
 			float accFiltrado_scaled[3];
+
+
+			float accRaw_scaled[3];
+
+			arm_scale_f32(accRaw,1000,accRaw_scaled,3);
+//
+//			if (accRaw_scaled[0] > max_acce[0])
+//				max_acce[0] = accRaw_scaled[0];
+//			if (accRaw_scaled[1] > max_acce[1])
+//				max_acce[1] = accRaw_scaled[1];
+//			if (accRaw_scaled[2] > max_acce[2])
+//				max_acce[2] = accRaw_scaled[2];
+//
+//			if (accRaw_scaled[0] < min_acce[0])
+//				min_acce[0] = accRaw_scaled[0];
+//			if (accRaw_scaled[1] < min_acce[1])
+//				min_acce[1] = accRaw_scaled[1];
+//			if (accRaw_scaled[2] < min_acce[2])
+//				min_acce[2] = accRaw_scaled[2];
 
 	    	c_common_datapr_multwii_bicopter_identifier();
 	    	c_common_datapr_multwii_motor_pins();
-		    c_common_datapr_multwii_motor(sp_left,sp_right);
+		    c_common_datapr_multwii_motor(canalTHROTTLE*100,sp_right);
 	    	c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG, rpy[PV_IMU_YAW  ]*RAD_TO_DEG );
 
 	    	arm_scale_f32(gyrRaw,RAD_TO_DEG,gyrRaw_rad,3);
-	    	arm_scale_f32(accRaw,1000,accRaw_scaled,3);
+//	    	arm_scale_f32(accRaw,1000,accRaw_scaled,3);
 //	    	arm_scale_f32(accFiltrado,1000,accFiltrado_scaled,3);
 //	    	arm_scale_f32(gyrFiltrado,RAD_TO_DEG,gyrFiltrado_rad,3);
 
+
+
 //	    	gyrRaw_rad[1]=gyrFiltrado_rad[0];
-//	    	c_common_datapr_multwii_raw_imu(accRaw_scaled,gyrRaw_rad,accFiltrado_scaled);
+//	    	c_common_datapr_multwii_raw_imu(min_acce,max_acce,accFiltrado_scaled);
 	    	c_common_datapr_multwii_raw_imu(accRaw_scaled,gyrRaw_rad,magRaw);
 //	    	c_common_datapr_multwii_raw_imu(MaxMag,MinMag,magRaw);
 //	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
-	    	c_common_datapr_multwii_servos(altitude_sonar,altitude_sonar);
+	    	c_common_datapr_multwii_servos(canalTHROTTLE*100,canalTHROTTLE*100);
 
 
-	    	c_common_datapr_multwii_debug(sp_left,sp_right,iActuation.servoLeft*RAD_TO_DEG,iActuation.servoLeft*RAD_TO_DEG);
+	    	c_common_datapr_multwii_debug(canalTHROTTLE,sp_right,iActuation.servoLeft*RAD_TO_DEG,iActuation.servoLeft*RAD_TO_DEG);
 
 
 

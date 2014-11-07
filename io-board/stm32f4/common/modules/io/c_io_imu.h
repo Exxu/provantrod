@@ -49,18 +49,31 @@
 #define G				   	9.81 //Ver se nao esta definindo denovo
 
 /* Offset Giroscopio*/
-#define OFFSET_GYRO_X		   	-0.051979079497908
-#define OFFSET_GYRO_Y		   	-0.012014143530644
-#define OFFSET_GYRO_Z			0.009635983263598
+//#define OFFSET_GYRO_X		   	-0.051979079497908
+//#define OFFSET_GYRO_Y		   	-0.012014143530644
+//#define OFFSET_GYRO_Z			0.009635983263598
+//#define OFFSET_GYRO_X		   	-0.430
+//#define OFFSET_GYRO_Y		   	-0.129
+//#define OFFSET_GYRO_Z			0.073
+
+#define OFFSET_GYRO_X		   	-0.054287654320988
+#define OFFSET_GYRO_Y		   	-0.017202469135802
+#define OFFSET_GYRO_Z			0.008808641975309
 
  // Accelerometer
  // "accel x,y,z (min/max) = X_MIN/X_MAX Y_MIN/Y_MAX Z_MIN/Z_MAX *1000"
- #define ACCEL_X_MIN ((float) -1.074)
- #define ACCEL_X_MAX ((float) 0.988)
- #define ACCEL_Y_MIN ((float) -1.015)
- #define ACCEL_Y_MAX ((float) 1.040)
- #define ACCEL_Z_MIN ((float) -1.097)
- #define ACCEL_Z_MAX ((float) 0.890)
+// #define ACCEL_X_MIN ((float) -1.074)
+// #define ACCEL_X_MAX ((float) 0.988)
+// #define ACCEL_Y_MIN ((float) -1.015)
+// #define ACCEL_Y_MAX ((float) 1.040)
+// #define ACCEL_Z_MIN ((float) -1.097)
+// #define ACCEL_Z_MAX ((float) 0.890)
+#define ACCEL_X_MIN ((float) -0.996)
+#define ACCEL_X_MAX ((float) 1.097)
+#define ACCEL_Y_MIN ((float) -1.031)
+#define ACCEL_Y_MAX ((float) 1.070)
+#define ACCEL_Z_MIN ((float) -1.115)
+#define ACCEL_Z_MAX ((float) 0.914)
  // Magnetometer (standard calibration mode)
  // "magn x,y,z (min/max) = X_MIN/X_MAX Y_MIN/Y_MAX Z_MIN/Z_MAX"
  #define MAGN_X_MIN ((float) -247)
@@ -71,6 +84,7 @@
  #define MAGN_Z_MAX ((float) 105)
 
  // Sensor calibration scale and offset values
+// #define ACCEL_SENSIBILITY 256
  #define ACCEL_X_OFFSET ((ACCEL_X_MIN + ACCEL_X_MAX) / 2.0f)
  #define ACCEL_Y_OFFSET ((ACCEL_Y_MIN + ACCEL_Y_MAX) / 2.0f)
  #define ACCEL_Z_OFFSET ((ACCEL_Z_MIN + ACCEL_Z_MAX) / 2.0f)
@@ -86,8 +100,8 @@
  #define MAGN_Z_SCALE (100.0f / (MAGN_Z_MAX - MAGN_Z_OFFSET))
 
  // define to use the calibration data. If not defined then the raw values of the sensors are used
-// #define CALIBRATE
- #define CALIBRATION__MAGN_USE_EXTENDED
+ #define CALIBRATE
+// #define CALIBRATION__MAGN_USE_EXTENDED
 //float mag_ellipsoid_center[3] = {79.8977, -113.117, -136.064};
 //const float mag_ellipsoid_transform[3][3] = {{0.792428, -0.00418974, 0.00504922}, {-0.00418974, 0.841005, -0.0430735}, {0.00504922, -0.0430735, 0.988147}};
 //arm_matrix_instance_f32 magn_ellipsoid_transform;

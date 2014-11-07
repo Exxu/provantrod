@@ -24,7 +24,7 @@
 #define sampleFreq	200.0f		// sample frequency in Hz
 //#define betaOperational		0.2f		// 2 * proportional gain
 //#define betaOperational		1.1f		// 2 * proportional gain
-#define betaOperational		0.05f		// 2 * proportional gain
+#define betaOperational		1.0f		// 2 * proportional gain
 #define betaInit			1.5f
 
 //---------------------------------------------------------------------------------------------------
@@ -269,6 +269,7 @@ float invSqrt(float x) {
 	y = *(float*)&i;
 	y = y * (1.5f - (halfx * y * y));
 	return y;
+//	return 1/sqrt(x);
 }
 
 //====================================================================================================

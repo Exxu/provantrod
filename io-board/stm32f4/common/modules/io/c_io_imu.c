@@ -97,19 +97,42 @@ void c_io_imu_init(I2C_TypeDef* I2Cx)
   I2Cx_imu=I2Cx;
 
 #ifdef C_IO_IMU_USE_ITG_ADXL_HMC // Inicialização para a IMU selecionada
+  /*-----------------------Acelerometer------------------------------*/
 	// Get Accelerometer ID
 	c_common_i2c_readBytes(I2Cx_imu, ACCL_ADDR, 0x00, 1, &ACCL_ID);
 
-	// Accelerometer increase G-range (+/- 16G)
-	c_common_i2c_writeByte(I2Cx_imu, ACCL_ADDR, 0x31, 0x0B);
+	//  ADXL345 (Accel) pow_CTL - Set to measurement mode
+	c_common_i2c_writeByte(I2Cx_imu, ACCL_ADDR, 0x2D, 8);
+	// Accelerometer range and set full scale (4mG/LSB)
+//	c_common_i2c_writeByte(I2Cx_imu, ACCL_ADDR, 0x31, 0x0B); //(+/- 16G)
+//	c_common_i2c_writeByte(I2Cx_imu, ACCL_ADDR, 0x31, 8); //(+/- 2G)
+	c_common_i2c_writeByte(I2Cx_imu, ACCL_ADDR, 0x31, 9); //(+/- 4G)
 
-  //  ADXL345 (Accel) pow_CTL
-  c_common_i2c_writeByte(I2Cx_imu, ACCL_ADDR, 0x2D, 8);
+	// Accelerometer output data rate(Hz)
+	c_common_i2c_writeByte(I2Cx_imu, ACCL_ADDR, 0x2C, 11); //200Hz
+//	c_common_i2c_writeByte(I2Cx_imu, ACCL_ADDR, 0x2C, 12); //400Hz
 
+
+
+  /*-----------------------Gyroscope------------------------------*/
   // Gyro ID and setup
 	c_common_i2c_readBytes(I2Cx_imu, GYRO_ADDR, 0x00, 1, &GYRO_ID);
-	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 24); //24 = 0b0001 1000
+//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0x16, 24); //24 = 0b0001 1000
+	// Low Pass Filter
+//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x1B); //fc=42Hz
+//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x1A); //fc=98Hz
+	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 25); //fc=188Hz
+//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x03); //fc=256Hz
 
+	// Output data frequency (must change if the value in register 0x16 changes)
+//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 4); //f=200Hz
+	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X15, 1); //f=500Hz
+//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0x15, 9); //f=800Hz
+	// Clock selection
+	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0x3E, 3); //clock to PLL gyro z axis
+
+
+/*-----------------------Magnetometer------------------------------*/
   // HMC5883 (Magn) Run in continuous mode
   c_common_i2c_writeByte(I2Cx_imu, MAGN_ADDR, 0x02, 0x00);
   // configure the B register to default value of Sensor Input Field Range: 1.2Ga
@@ -181,6 +204,9 @@ float mag_tmp[3]={0};
     accRaw[0] = (int16_t)(imuBuffer[0] | (imuBuffer[1] << 8))*accScale;
     accRaw[1] = (int16_t)(imuBuffer[2] | (imuBuffer[3] << 8))*accScale;
     accRaw[2] = (int16_t)(imuBuffer[4] | (imuBuffer[5] << 8))*accScale;
+//	accRaw[1] = ((((int16_t) imuBuffer[3]) << 8) | imuBuffer[2])*accScale; // X axis (internal sensor y axis)
+//	accRaw[0] = ((((int16_t) imuBuffer[1]) << 8) | imuBuffer[0])*accScale; // Y axis (internal sensor x axis)
+//	accRaw[2] = ((((int16_t) imuBuffer[5]) << 8) | imuBuffer[4])*accScale; // Z axis (internal sensor z axis)
 
     // Read x, y, z from gyro, pack the data
 

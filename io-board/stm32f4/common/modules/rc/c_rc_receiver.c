@@ -292,6 +292,7 @@ void  EXTI9_5_IRQHandler()
 			channel_index++;
 		}
 	}
+
 	TIM_SetCounter(TIM2, 0);
 	/*
 	char str[64]={};

@@ -31,8 +31,8 @@ extern volatile float twoKi;			// 2 * integral gain (Ki)
 
 /* Exported functions ------------------------------------------------------- */
 
-void c_datapr_MahonyAHRSupdate(float * q, float * velAngular_corrigida, float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
-void c_datapr_MahonyAHRSupdateIMU(float * q, float * velAngular_corrigida, float gx, float gy, float gz, float ax, float ay, float az);
+void c_datapr_MahonyAHRSupdate(float * q,  float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
+void c_datapr_MahonyAHRSupdateIMU(float * q,  float gx, float gy, float gz, float ax, float ay, float az);
 
 
 #ifdef __cplusplus
