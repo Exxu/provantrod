@@ -596,14 +596,14 @@ pv_msg_io_actuation RC_controller(pv_msg_datapr_attitude attitude,
 
 	arm_matrix_instance_f32 state_vector;
 
-	state_vector_f32[0]=position.z-position_reference.z;
-	state_vector_f32[1]=attitude.roll;
-	state_vector_f32[2]=attitude.pitch+0.0791f;
-	state_vector_f32[3]=attitude.yaw;
-	state_vector_f32[4]=position.dotZ;
-	state_vector_f32[5]=attitude.dotRoll;
-	state_vector_f32[6]=attitude.dotPitch;
-	state_vector_f32[7]=attitude.dotYaw;
+//	state_vector_f32[0]=position.z-position_reference.z;
+//	state_vector_f32[1]=attitude.roll;
+//	state_vector_f32[2]=attitude.pitch+0.0791f;
+//	state_vector_f32[3]=attitude.yaw;
+//	state_vector_f32[4]=position.dotZ;
+//	state_vector_f32[5]=attitude.dotRoll;
+//	state_vector_f32[6]=attitude.dotPitch;
+//	state_vector_f32[7]=attitude.dotYaw;
 
 //	arm_mat_init_f32(&state_vector, 8, 1, (float32_t *)state_vector_f32);
 //
