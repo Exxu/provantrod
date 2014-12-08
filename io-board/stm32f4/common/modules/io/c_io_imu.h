@@ -76,12 +76,28 @@
 #define ACCEL_Z_MAX ((float) 0.914)
  // Magnetometer (standard calibration mode)
  // "magn x,y,z (min/max) = X_MIN/X_MAX Y_MIN/Y_MAX Z_MIN/Z_MAX"
- #define MAGN_X_MIN ((float) -247)
- #define MAGN_X_MAX ((float) 379)
- #define MAGN_Y_MIN ((float) -461)
- #define MAGN_Y_MAX ((float) 161)
- #define MAGN_Z_MIN ((float) -380)
- #define MAGN_Z_MAX ((float) 105)
+// #define MAGN_X_MIN ((float) -247)
+// #define MAGN_X_MAX ((float) 379)
+// #define MAGN_Y_MIN ((float) -461)
+// #define MAGN_Y_MAX ((float) 161)
+// #define MAGN_Z_MIN ((float) -380)
+// #define MAGN_Z_MAX ((float) 105)
+
+ //Magnetometer parameters for calibration
+ //see:http://diydrones.com/profiles/blogs/advanced-hard-and-soft-iron-magnetometer-calibration-for-dummies?id=705844%3ABlogPost%3A1676387&page=2#comments
+ #define M11 1.807
+ #define M12 -0.055
+ #define M13 0.052
+ #define M21 0.214
+ #define M22 1.926
+ #define M23 0.003
+ #define M31 0.02
+ #define M32 -0.048
+ #define M33 2.071
+
+ #define Bx -106.511
+ #define By -150.561
+ #define Bz -417.946
 
  // Sensor calibration scale and offset values
 // #define ACCEL_SENSIBILITY 256
@@ -92,12 +108,12 @@
  #define ACCEL_Y_SCALE (1 / (ACCEL_Y_MAX - ACCEL_Y_OFFSET))
  #define ACCEL_Z_SCALE (1 / (ACCEL_Z_MAX - ACCEL_Z_OFFSET))
 
- #define MAGN_X_OFFSET ((MAGN_X_MIN + MAGN_X_MAX) / 2.0f)
- #define MAGN_Y_OFFSET ((MAGN_Y_MIN + MAGN_Y_MAX) / 2.0f)
- #define MAGN_Z_OFFSET ((MAGN_Z_MIN + MAGN_Z_MAX) / 2.0f)
- #define MAGN_X_SCALE (100.0f / (MAGN_X_MAX - MAGN_X_OFFSET))
- #define MAGN_Y_SCALE (100.0f / (MAGN_Y_MAX - MAGN_Y_OFFSET))
- #define MAGN_Z_SCALE (100.0f / (MAGN_Z_MAX - MAGN_Z_OFFSET))
+// #define MAGN_X_OFFSET ((MAGN_X_MIN + MAGN_X_MAX) / 2.0f)
+// #define MAGN_Y_OFFSET ((MAGN_Y_MIN + MAGN_Y_MAX) / 2.0f)
+// #define MAGN_Z_OFFSET ((MAGN_Z_MIN + MAGN_Z_MAX) / 2.0f)
+// #define MAGN_X_SCALE (1 / (MAGN_X_MAX - MAGN_X_OFFSET))
+// #define MAGN_Y_SCALE (1 / (MAGN_Y_MAX - MAGN_Y_OFFSET))
+// #define MAGN_Z_SCALE (1 / (MAGN_Z_MAX - MAGN_Z_OFFSET))
 
  // define to use the calibration data. If not defined then the raw values of the sensors are used
  #define CALIBRATE

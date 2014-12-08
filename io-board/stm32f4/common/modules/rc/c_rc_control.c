@@ -50,54 +50,101 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 
+//// PID controller gains
+//#if 1
+//	#define KPPHI    100.0f
+//	#define KVPHI    10.0f
+//	#define KIPHI	 0.0f
+//	#define KPTHETA  100.0f
+//	#define KVTHETA  10.0f
+//	#define KITHETA	 0.0f
+//	#define KPPSI    100.0f
+//	#define KVPSI    10.0f
+//	#define KIPSI	 0.0f
+//	#define KPZ		 18.0f
+//	#define KVZ		 6.0f
+//#else
+//	#define KPPHI    18.0f
+//	#define KVPHI    6.0f
+//	#define KIPHI	 0.0f
+//	#define KPTHETA  6.0f
+//	#define KVTHETA  18.0f
+//	#define KITHETA	 0.0f
+//	#define KPPSI    18.0f
+//	#define KVPSI    6.0f
+//	#define KIPSI	 0.0f
+//	#define KVZ		 6.0f
+//	#define KPZ		 18.0f
+//#endif
 // PID controller gains
-#if 0
-	#define KPPHI    100.0f
-	#define KVPHI    12.0f
-	#define KIPHI	 3.0f
-	#define KPTHETA  100.0f
-	#define KVTHETA  12.0f
-	#define KITHETA	 3.0f
-	#define KPPSI    100.0f
-	#define KVPSI    12.0f
-	#define KIPSI	 3.0f
-	#define KVZ		 0.0f
-	#define KPZ		 0.0f
-#else
-	#define KPPHI    100.0f
-	#define KVPHI    10.0f
-	#define KIPHI	 3.0f
-	#define KPTHETA  100.0f
-	#define KVTHETA  10.0f
-	#define KITHETA	 3.0f
-	#define KPPSI    100.0f
-	#define KVPSI    0.0f
+#if 1
+	#define KPPHI    72.0f
+	#define KVPHI    15.0f
+	#define KIPHI	 162.0f
+	#define KPTHETA  72.0f
+	#define KVTHETA  15.0f
+	#define KITHETA	 162.0f
+	#define KPPSI    18.0f
+	#define KVPSI    6.0f
 	#define KIPSI	 0.0f
-	#define KVZ		 0.0f
-	#define KPZ		 0.0f
+	#define KVZ		 6.0f//6
+	#define KPZ		 18.0f//18
+#else
+	#define KPPHI    18.0f
+	#define KVPHI    6.0f
+	#define KIPHI	 0.0f
+	#define KPTHETA  6.0f
+	#define KVTHETA  18.0f
+	#define KITHETA	 0.0f
+	#define KPPSI    18.0f
+	#define KVPSI    6.0f
+	#define KIPSI	 0.0f
+	#define KVZ		 2.86f
+	#define KPZ		 2.0f
 #endif
 
 // Environment parameters
 #define G   9.81f //gravity
 
-// Aircraft parameters
-#define M    1.672f   // mass kg
-//#define M    2.0f   // mass kg
-#define L    0.27023f // aircraft's arm length. Y-axis distance between center of rotation(B) and rotor center of mass.
-#define H    0.03349f // center of mass displacement in Z-axis
+// Antigos valores magicos
+//// Aircraft parameters
+//#define M    1.672f   // mass kg
+//#define L    0.27023f // aircraft's arm length. Y-axis distance between center of rotation(B) and rotor center of mass.
+//#define H    0.03349f // center of mass displacement in Z-axis
 // Aircraft's Moments of Inertia km*m²
-#define IXX  0.01905797115f
-#define IYY  0.00502396129f
-#define IZZ  0.01859602726f
+//#define IXX  0.01905797115f
+//#define IYY  0.00502396129f
+//#define IZZ  0.01859602726f
 
 
+// Aircraft parameters
+//#define M    1.75192733f   // mass kg
+#define M    2.3f   // mass kg
+#define L    0.24737f // aircraft's arm length. Y-axis distance between center of rotation(B) and rotor center of mass.
+//#define H    0.04942921f // center of mass displacement in Z-axis
+#define H    0.05394f // center of mass displacement in Z-axis
+// Aircraft's Moments of Inertia km*m²
+//antigo
+//#define IXX  0.00982678f
+//#define IYY  0.01008018f
+//#define IZZ  0.00979193f
+
+// Sistema Inteiro
+#define IXX  0.04794375f
+#define IYY  0.01872182f
+#define IZZ  0.03666388f
+
+// Somente Corpo 1
+//#define IXX  0.02775010f
+//#define IYY  0.01759953f
+//#define IZZ  0.01754078f
 
 // Reference filter parameters
 //#define REFERENCE_FILTER_POLE	40
 //#define REFERENCE_FILTER_ZERO	100
 
-// Fixed Sample Time - TODO Rever se vai usar esse ou o variavel que chega por mensagem do pv_msg_io
-#define CONTROL_SAMPLE_TIME 	0.005f
+// Fixed Sample Time
+#define CONTROL_SAMPLE_TIME 	0.01f
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -107,6 +154,21 @@ float32_t attitudeVector_f32[3]={0};
 float32_t Mq_f32[3][3]={{0}};
 float32_t Cqq_f32[3][3]={{0}};
 float32_t Fzb=0;
+
+//float32_t LQR_Ke_f32[4][8]={
+//{21.207062455586751, -24.707408251121784,   0.069346468761083,   2.452130918218125,  12.216788626480916,  -4.011929550716840,  0.004475317798479,   0.557055453783041},
+//{21.233444539785776,  24.686653404459395,  -0.003353700697260,  -2.445515972875630,  12.233162353241495,   4.011111755550325,  0.005166788138636,  -0.555396333501935},
+//{-0.000719994314509,   0.171143370645070,   0.344766866536217,   2.043259478401853,  -0.000386473018984,   0.031030138533026,  0.348169765415673,   0.506637304021608},
+//{-0.000523964029942,  -0.167138107269209,   0.375284925986611,  -2.029180987056317,  -0.000281018829228,  -0.030178402624864,  0.345138150637528,  -0.506235008031713}
+//};
+//float32_t LQR_Ki_f32[4][8]={
+//{-18.360708418541652,  74.747291643686452,  -0.082091356993229,  -5.151947191333180},
+//{-18.381627935970801, -74.663218767292690,   0.029590624926112,   5.137988576748046},
+//{0.000669511614153,   -0.467900642908488,   -4.063031942899512,  -4.032256152392106},
+//{0.000487812904700,   0.459532421289280,    -4.048507830710655,   4.047414146624359}
+//};
+float32_t state_vector_f32[8]={0};
+float32_t result_f32[4]={0};
 
 /** \brief Integral do erro dos angulos de orientacao VANT.*/
 typedef struct {
@@ -142,6 +204,8 @@ void integrateError(c_rc_control_error current_error, float sample_time);
 //pv_msg_io_actuation filtra_sinal_atuadores(c_rc_control_actuation_signals actuators_signals);
 //float filtro_primeira_ordem(float signal_raw, float last_signal_filtered, float last_signal_raw, float p, float z, float T);
 float32_t Fzb_RC(float32_t signal_RC, pv_msg_datapr_attitude attitude);
+
+//pv_msg_io_actuation LQR(arm_matrix_instance_f32 state_vector);
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -475,6 +539,28 @@ arm_matrix_instance_f32 coriolis_matrix(pv_msg_datapr_attitude attitude)
 //	return actuation_filtered;
 //}
 
+//pv_msg_io_actuation LQR(arm_matrix_instance_f32 state_vector){
+//
+//arm_matrix_instance_f32 Ke;
+//arm_matrix_instance_f32 result;
+////float32_t * actuation_f32;
+//pv_msg_io_actuation actuation;
+//
+//arm_mat_init_f32(&Ke, 4, 8, (float32_t *)LQR_Ke_f32);
+//arm_mat_init_f32(&result, 4, 1, (float32_t *)result_f32);
+//
+//arm_mat_mult_f32(&Ke, &state_vector, &result);
+//
+////actuation_f32 = result.pData;
+//actuation.escRightSpeed =result.pData[0]+8.52937;
+//actuation.escLeftSpeed =result.pData[1]+8.55244;
+//actuation.servoRight =result.pData[2]+0.0791888;
+//actuation.servoLeft =result.pData[3]+0.0789936;
+//
+////[0.852937E1,0.855244E1,0.791888E-1,0.789936E-1]
+//
+//}
+
 /* Exported functions definitions --------------------------------------------*/
 
 /** \brief Inicilização do controle de estabilidade.
@@ -508,20 +594,31 @@ pv_msg_io_actuation RC_controller(pv_msg_datapr_attitude attitude,
 	arm_matrix_instance_f32 tau;
 	pv_msg_io_actuation actuation_signals;
 
+	arm_matrix_instance_f32 state_vector;
+
+	state_vector_f32[0]=position.z-position_reference.z;
+	state_vector_f32[1]=attitude.roll;
+	state_vector_f32[2]=attitude.pitch+0.0791f;
+	state_vector_f32[3]=attitude.yaw;
+	state_vector_f32[4]=position.dotZ;
+	state_vector_f32[5]=attitude.dotRoll;
+	state_vector_f32[6]=attitude.dotPitch;
+	state_vector_f32[7]=attitude.dotYaw;
+
+//	arm_mat_init_f32(&state_vector, 8, 1, (float32_t *)state_vector_f32);
+//
+//	actuation_signals = LQR(state_vector);
+
 	gamma = PD_gains_step(attitude, attitude_reference, sensor_time);
 
 	tau = torque_calculation_step(attitude, gamma);
 
 	Fzb = altitude_controller_step(position.z, position_reference.z, position.dotZ, position_reference.dotZ, attitude);
 
-//	Fzb = Fzb_RC(throttle_control, attitude);
-
 	actuation_signals = actuators_signals_step(tau, Fzb);
 
-//	filtered_actuators_signals = filtra_sinal_atuadores(raw_actuation_signals);
-
-	// Declares that the servos will use angle control, rather than torque control
-//	filtered_actuators_signals.servoTorqueControlEnable = 0;
+	 Declares that the servos will use angle control, rather than torque control
+	filtered_actuators_signals.servoTorqueControlEnable = 0;
 
 	return actuation_signals;
 }

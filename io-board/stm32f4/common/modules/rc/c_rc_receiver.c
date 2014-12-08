@@ -180,10 +180,10 @@ float  c_rc_receiver_getChannel(int channel_n) {
 
         C_RC_CHANNEL_THROTTLE   |    C_RC_CHANNEL_ROLL    |    C_RC_CHANNEL_YAW   |   C_RC_CHANNEL_PITCH
     ----------------------------|-------------------------|-----------------------|----------------------
-            706/1581            |        713/1542         |        692/1523       |       687/1513
+            706/1581  -  1599/588          |        713/1542         |        692/1523       |       687/1513
     *****************************************************************************************************/
-        if(channel_n==C_RC_CHANNEL_THROTTLE)
-            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 706, 1581, +100, -100);
+        if(channel_n==C_RC_CHANNEL_THROTTLE)//last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 706, 1581, +100, -100);
+            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 588, 1599, +100, -100);
        	if(channel_n==C_RC_CHANNEL_ROLL)
             last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 713, 1542, -100, +100);
         if(channel_n==C_RC_CHANNEL_YAW)
@@ -292,6 +292,8 @@ void  EXTI9_5_IRQHandler()
 			channel_index++;
 		}
 	}
+
+//	channels[C_RC_CHANNEL_A]=pulse_width;
 
 	TIM_SetCounter(TIM2, 0);
 	/*

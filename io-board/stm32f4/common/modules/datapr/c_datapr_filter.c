@@ -28,13 +28,13 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 //************** Memoria para o filtro do Giroscopio ************************
-float filtered_gyro_memory_X[8]={0};
-float filtered_gyro_memory_Y[8]={0};
-float filtered_gyro_memory_Z[8]={0};
+float filtered_gyro_memory_X[2]={0};
+float filtered_gyro_memory_Y[2]={0};
+float filtered_gyro_memory_Z[2]={0};
 
-float raw_gyro_memory_X[8]={0};
-float raw_gyro_memory_Y[8]={0};
-float raw_gyro_memory_Z[8]={0};
+float raw_gyro_memory_X[2]={0};
+float raw_gyro_memory_Y[2]={0};
+float raw_gyro_memory_Z[2]={0};
 //***************************************************************************
 
 //************** Memoria para o filtro do acelerometro ************************

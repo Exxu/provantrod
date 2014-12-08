@@ -68,6 +68,11 @@ unsigned char MAGN_ID = 0;
 const float mag_ellipsoid_center[3] = {79.8977, -113.117, -136.064};
 const float mag_ellipsoid_transform[3][3] = {{0.792428, -0.00418974, 0.00504922}, {-0.00418974, 0.841005, -0.0430735}, {0.00504922, -0.0430735, 0.988147}};
 
+//calibration_matrix[3][3] is the transformation matrix
+ double mag_calibration_matrix[3][3] = {{M11, M12, M13},{M21, M22, M23},{M31, M32, M33} };
+ //bias[3] is the bias
+ double mag_bias[3] = {Bx,By,Bz};
+
 /* Private function prototypes -----------------------------------------------*/
 
 //void c_io_imu_Euler2Quaternion(float * rpy, float * q);
@@ -138,6 +143,9 @@ void c_io_imu_init(I2C_TypeDef* I2Cx)
   // configure the B register to default value of Sensor Input Field Range: 1.2Ga
   // +/- 1.2Ga <-> +/- 2047
   c_common_i2c_writeByte(I2Cx_imu, MAGN_ADDR, 0x01, 0x20);
+
+  //75Hz (maximum)
+  c_common_i2c_writeByte(I2Cx_imu, MAGN_ADDR, 0x00, 0x18);
 
 //	#ifdef CALIBRATION__MAGN_USE_EXTENDED
 //		arm_mat_init_f32(&magn_ellipsoid_transform, 3, 1, (float32_t *)magn_ellipsoid_transform_f32);
@@ -273,9 +281,15 @@ float mag_tmp[3]={0};
 		magRaw[1] = mag_ellipsoid_transform[1][0]*mag_tmp[0] + mag_ellipsoid_transform[1][1]*mag_tmp[1] + mag_ellipsoid_transform[1][2]*mag_tmp[2];
 		magRaw[2] = mag_ellipsoid_transform[2][0]*mag_tmp[0] + mag_ellipsoid_transform[2][1]*mag_tmp[1] + mag_ellipsoid_transform[2][2]*mag_tmp[2];
     #else
-		magRaw[0] = (magRaw[0] - MAGN_X_OFFSET) * MAGN_X_SCALE;
-		magRaw[1] = (magRaw[1] - MAGN_Y_OFFSET) * MAGN_Y_SCALE;
-		magRaw[2] = (magRaw[2] - MAGN_Z_OFFSET) * MAGN_Z_SCALE;
+	 for (int i=0; i<3; ++i) magRaw[i] = magRaw[i] - mag_bias[i];
+
+	 float result[3] = {0, 0, 0};
+	 	 for (int i=0; i<3; ++i)
+	 		 for (int j=0; j<3; ++j)
+	 			 result[i] += mag_calibration_matrix[i][j] * magRaw[j];
+
+	 //calibrated values
+	 for (int i=0; i<3; ++i) magRaw[i] = result[i];
     #endif
     // Compensate gyroscope error
     gyrRaw[0] -= OFFSET_GYRO_X;
