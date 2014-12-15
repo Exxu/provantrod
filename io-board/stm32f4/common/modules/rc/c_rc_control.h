@@ -26,6 +26,7 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 
+
 /* Exported functions ------------------------------------------------------- */
 void c_rc_control_init();
 pv_msg_io_actuation RC_controller(pv_msg_datapr_attitude attitude,

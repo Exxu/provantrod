@@ -183,15 +183,15 @@ float  c_rc_receiver_getChannel(int channel_n) {
             706/1581  -  1599/588          |        713/1542         |        692/1523       |       687/1513
     *****************************************************************************************************/
         if(channel_n==C_RC_CHANNEL_THROTTLE)//last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 706, 1581, +100, -100);
-            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 588, 1599, +100, -100);
+            last_channels[channel_n] = channels[channel_n];// = c_common_utils_map(channels[channel_n], 588, 1599, +100, -100);
        	if(channel_n==C_RC_CHANNEL_ROLL)
-            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 713, 1542, -100, +100);
+            last_channels[channel_n] = channels[channel_n];// = c_common_utils_map(channels[channel_n], 713, 1542, -100, +100);
         if(channel_n==C_RC_CHANNEL_YAW)
-            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 692, 1523, -100, +100);
+            last_channels[channel_n] = channels[channel_n];// = c_common_utils_map(channels[channel_n], 692, 1523, -100, +100);
         if(channel_n==C_RC_CHANNEL_PITCH)
-            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 687, 1513, +100, -100);
+            last_channels[channel_n] = channels[channel_n];// = c_common_utils_map(channels[channel_n], 687, 1513, +100, -100);
         if(channel_n==C_RC_CHANNEL_VR)
-            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 564, 1672, 0,100);
+            last_channels[channel_n] = channels[channel_n];// = c_common_utils_map(channels[channel_n], 564, 1672, 0,100);
         if(channel_n==C_RC_CHANNEL_A)
             if(channels[channel_n]>1000)
             	channels[channel_n]=last_channels[channel_n] = 0;

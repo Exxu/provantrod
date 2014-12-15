@@ -144,7 +144,7 @@
 //#define REFERENCE_FILTER_ZERO	100
 
 // Fixed Sample Time
-#define CONTROL_SAMPLE_TIME 	0.01f
+#define CONTROL_SAMPLE_TIME 	0.005f
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -155,20 +155,6 @@ float32_t Mq_f32[3][3]={{0}};
 float32_t Cqq_f32[3][3]={{0}};
 float32_t Fzb=0;
 
-//float32_t LQR_Ke_f32[4][8]={
-//{21.207062455586751, -24.707408251121784,   0.069346468761083,   2.452130918218125,  12.216788626480916,  -4.011929550716840,  0.004475317798479,   0.557055453783041},
-//{21.233444539785776,  24.686653404459395,  -0.003353700697260,  -2.445515972875630,  12.233162353241495,   4.011111755550325,  0.005166788138636,  -0.555396333501935},
-//{-0.000719994314509,   0.171143370645070,   0.344766866536217,   2.043259478401853,  -0.000386473018984,   0.031030138533026,  0.348169765415673,   0.506637304021608},
-//{-0.000523964029942,  -0.167138107269209,   0.375284925986611,  -2.029180987056317,  -0.000281018829228,  -0.030178402624864,  0.345138150637528,  -0.506235008031713}
-//};
-//float32_t LQR_Ki_f32[4][8]={
-//{-18.360708418541652,  74.747291643686452,  -0.082091356993229,  -5.151947191333180},
-//{-18.381627935970801, -74.663218767292690,   0.029590624926112,   5.137988576748046},
-//{0.000669511614153,   -0.467900642908488,   -4.063031942899512,  -4.032256152392106},
-//{0.000487812904700,   0.459532421289280,    -4.048507830710655,   4.047414146624359}
-//};
-float32_t state_vector_f32[8]={0};
-float32_t result_f32[4]={0};
 
 /** \brief Integral do erro dos angulos de orientacao VANT.*/
 typedef struct {
@@ -181,8 +167,8 @@ typedef struct {
 
 // Variáveis criadas para guardar o erro e a integral do erro
 // São globais porque precisamos do erro anterior e integracao anterior.
-c_rc_control_error integrated_error={0};
-c_rc_control_error error={0};
+//c_rc_control_error integrated_error={0};
+//c_rc_control_error error={0};
 
 // Variáveis utilizadas no filtro de referencia
 // São globais porque precisamos da entrada anterior e da saida anterior do filtro.
@@ -224,11 +210,11 @@ float32_t Fzb_RC(float32_t throttle_control, pv_msg_datapr_attitude attitude){
 	return (M*G*(0.4+0.6*throttle_control/100)) / (cos(attitude.roll) * cos(attitude.pitch));
 }
 
-/** \brief Integral numérica utilizando o método trapezoidal (Tustin) */
-float integrateTrapezoidal(float last_integration, float current_value, float last_value, float sample_time){
-
-	return last_integration + sample_time * (current_value + last_value)/2;
-}
+///** \brief Integral numérica utilizando o método trapezoidal (Tustin) */
+//float integrateTrapezoidal(float last_integration, float current_value, float last_value, float sample_time){
+//
+//	return last_integration + sample_time * 0.5* (current_value + last_value);
+//}
 
 /** \brief Integra o erro, para ser usado no controle.
  * @param current_error erro calculado nesta iteracão
@@ -238,17 +224,17 @@ float integrateTrapezoidal(float last_integration, float current_value, float la
  * da última iteracão.
  * Outra vairavel global foic riada para guardar o valor do erro atual para a proxima iteracao
  */
-void integrateError(c_rc_control_error current_error, float sample_time){
-
-	integrated_error.roll = integrateTrapezoidal(integrated_error.roll, current_error.roll, error.roll, sample_time);
-	integrated_error.pitch =integrateTrapezoidal(integrated_error.pitch, current_error.pitch, error.pitch, sample_time);
-	integrated_error.yaw =integrateTrapezoidal(integrated_error.yaw, current_error.yaw, error.yaw, sample_time);
-
-	/* guarda o valor do erro para a proxima iteracao */
-	error.roll  = current_error.roll;
-	error.pitch = current_error.pitch;
-	error.yaw   = current_error.yaw;
-}
+//void integrateError(c_rc_control_error current_error, float sample_time){
+//
+//	integrated_error.roll = integrateTrapezoidal(integrated_error.roll, current_error.roll, error.roll, sample_time);
+//	integrated_error.pitch =integrateTrapezoidal(integrated_error.pitch, current_error.pitch, error.pitch, sample_time);
+//	integrated_error.yaw =integrateTrapezoidal(integrated_error.yaw, current_error.yaw, error.yaw, sample_time);
+//
+//	/* guarda o valor do erro para a proxima iteracao */
+//	error.roll  = current_error.roll;
+//	error.pitch = current_error.pitch;
+//	error.yaw   = current_error.yaw;
+//}
 
 
 arm_matrix_instance_f32 PD_gains_step(pv_msg_datapr_attitude attitude, pv_msg_datapr_attitude attitude_reference,
@@ -594,21 +580,6 @@ pv_msg_io_actuation RC_controller(pv_msg_datapr_attitude attitude,
 	arm_matrix_instance_f32 tau;
 	pv_msg_io_actuation actuation_signals;
 
-	arm_matrix_instance_f32 state_vector;
-
-//	state_vector_f32[0]=position.z-position_reference.z;
-//	state_vector_f32[1]=attitude.roll;
-//	state_vector_f32[2]=attitude.pitch+0.0791f;
-//	state_vector_f32[3]=attitude.yaw;
-//	state_vector_f32[4]=position.dotZ;
-//	state_vector_f32[5]=attitude.dotRoll;
-//	state_vector_f32[6]=attitude.dotPitch;
-//	state_vector_f32[7]=attitude.dotYaw;
-
-//	arm_mat_init_f32(&state_vector, 8, 1, (float32_t *)state_vector_f32);
-//
-//	actuation_signals = LQR(state_vector);
-
 	gamma = PD_gains_step(attitude, attitude_reference, sensor_time);
 
 	tau = torque_calculation_step(attitude, gamma);
@@ -617,8 +588,8 @@ pv_msg_io_actuation RC_controller(pv_msg_datapr_attitude attitude,
 
 	actuation_signals = actuators_signals_step(tau, Fzb);
 
-	 Declares that the servos will use angle control, rather than torque control
-	filtered_actuators_signals.servoTorqueControlEnable = 0;
+//	 Declares that the servos will use angle control, rather than torque control
+//	filtered_actuators_signals.servoTorqueControlEnable = 0;
 
 	return actuation_signals;
 }

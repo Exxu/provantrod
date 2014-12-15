@@ -154,9 +154,9 @@ int main(void)
 	module_rc_init();
 
 	/* Connect modules: interface1.o* = interface2.i* */
-	pv_interface_io.oAttitude  = pv_interface_rc.iAttitude;
-	pv_interface_rc.oActuation = pv_interface_io.iActuation;
-	pv_interface_io.oSensorTime = pv_interface_rc.iSensorTime;
+//	pv_interface_io.oAttitude  = pv_interface_rc.iAttitude;
+//	pv_interface_rc.oActuation = pv_interface_io.iActuation;
+//	pv_interface_io.oSensorTime = pv_interface_rc.iSensorTime;
 
 	c_common_usart_puts(USART2, "Iniciando!\n\r");
 

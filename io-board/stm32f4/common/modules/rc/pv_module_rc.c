@@ -54,20 +54,20 @@ pv_msg_io_actuation    oActuation;
 void module_rc_init() {
 	/* Inicialização do hardware do módulo */
 	c_rc_receiver_init();
-  LED_builtin_rc = c_common_gpio_init(GPIOB, GPIO_Pin_15, GPIO_Mode_OUT);
+    LED_builtin_rc = c_common_gpio_init(GPIOB, GPIO_Pin_15, GPIO_Mode_OUT);
 
 	/* Inicialização das filas do módulo. Apenas inboxes (i*!) são criadas! */
-	pv_interface_rc.iAttitude  = xQueueCreate(1, sizeof(pv_msg_datapr_attitude));
-	pv_interface_rc.iSensorTime = xQueueCreate(1, sizeof(pv_msg_datapr_sensor_time));
-
-	/* Inicializando outboxes em 0 */
-	pv_interface_rc.oActuation = 0;
-
-	/* Verificação de criação correta das filas */
-	if(pv_interface_rc.iAttitude == 0 || pv_interface_rc.iSensorTime == 0) {
-		vTraceConsoleMessage("Could not create queue in pv_interface_io!");
-		while(1);
-	}
+//	pv_interface_rc.iAttitude  = xQueueCreate(1, sizeof(pv_msg_datapr_attitude));
+//	pv_interface_rc.iSensorTime = xQueueCreate(1, sizeof(pv_msg_datapr_sensor_time));
+//
+//	/* Inicializando outboxes em 0 */
+//	pv_interface_rc.oActuation = 0;
+//
+//	/* Verificação de criação correta das filas */
+//	if(pv_interface_rc.iAttitude == 0 || pv_interface_rc.iSensorTime == 0) {
+//		vTraceConsoleMessage("Could not create queue in pv_interface_io!");
+//		while(1);
+//	}
 }
 
 /** \brief Função principal do módulo de RC.
@@ -92,7 +92,7 @@ void module_rc_run() {
     xQueueReceive(pv_interface_rc.iSensorTime, &iSensorTime, 0);
     
     /// Controle
-    #if 1
+    #if 0
       pv_msg_io_actuation    actuation = {0,0.0f,0.0f,0.0f,0.0f};
       pv_msg_datapr_attitude attitude  = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
       pv_msg_datapr_attitude attitude_reference = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};

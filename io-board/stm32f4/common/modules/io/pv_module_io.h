@@ -21,7 +21,7 @@
 
 
 //numero de iteracoes para inicializar atuadores e sensores.
-#define INIT_ITERATIONS 1000
+#define INIT_ITERATIONS 100
 
 /* Includes ------------------------------------------------------------------*/
 
@@ -41,18 +41,19 @@
 #include "c_io_imu.h"
 #include "c_io_sonar.h"
 
-#include "c_rc_control.h"
+//#include "c_rc_control.h"
 #include "c_rc_receiver.h"
+#include "c_rc_SFC.h"
 
 #include "pv_typedefs.h"
 #include "c_datapr_MultWii.h"
 
  /* Filtros Complementares */
 #include "c_datapr_MahonyAHRS.h"
-#include "c_datapr_MadgwickAHRS.h"
+//#include "c_datapr_MadgwickAHRS.h"
 
 /* Filtro */
-#include "c_datapr_filter.h"
+//#include "c_datapr_filter.h"
 
 
 /* Exported types ------------------------------------------------------------*/
@@ -62,12 +63,12 @@
    * Armazena e envia dados brutos ou pré-processados de sensores, e recebe
    * setpoints ou comandos para atuadores.
    */
-struct pv_interface_io {
-	xQueueHandle oAttitude;		/** Output da Orientação do VANT. Tipo pv_msg_datapr_attitude . **/
-	xQueueHandle oPosition;		/** \todo Implementar output da posição do VANT. **/
-	xQueueHandle oSensorTime;	/** Informacões de tempo relativos aos sensores. Tipo pv_msg_datapr_sensor_time . **/
-	xQueueHandle iActuation;	/** Sinais de atuação para módulo de IO. Tipo pv_msg_io_actuation . **/
-} pv_interface_io;
+//struct pv_interface_io {
+//	xQueueHandle oAttitude;		/** Output da Orientação do VANT. Tipo pv_msg_datapr_attitude . **/
+//	xQueueHandle oPosition;		/** \todo Implementar output da posição do VANT. **/
+//	xQueueHandle oSensorTime;	/** Informacões de tempo relativos aos sensores. Tipo pv_msg_datapr_sensor_time . **/
+//	xQueueHandle iActuation;	/** Sinais de atuação para módulo de IO. Tipo pv_msg_io_actuation . **/
+//} pv_interface_io;
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
