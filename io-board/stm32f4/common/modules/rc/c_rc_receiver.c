@@ -178,18 +178,18 @@ float  c_rc_receiver_getChannel(int channel_n) {
   /** Maximos e minimos de cada canal
     * temosque encontrar os zeros do mag
 
-        C_RC_CHANNEL_THROTTLE   |    C_RC_CHANNEL_ROLL    |    C_RC_CHANNEL_YAW   |   C_RC_CHANNEL_PITCH
+        C_RC_CHANNEL_THROTTLE   |    C_RC_CHANNEL_ROLL    |  C_RC_CHANNEL_PITCH   |  C_RC_CHANNEL_YAW
     ----------------------------|-------------------------|-----------------------|----------------------
-            706/1581  -  1599/588          |        713/1542         |        692/1523       |       687/1513
+            1590/605            |        587/1588         |        583/1586       |      582/1573
     *****************************************************************************************************/
         if(channel_n==C_RC_CHANNEL_THROTTLE)//last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 706, 1581, +100, -100);
-            last_channels[channel_n] = channels[channel_n];// = c_common_utils_map(channels[channel_n], 588, 1599, +100, -100);
+            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 605, 1589, +100, -100);
        	if(channel_n==C_RC_CHANNEL_ROLL)
-            last_channels[channel_n] = channels[channel_n];// = c_common_utils_map(channels[channel_n], 713, 1542, -100, +100);
+            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 587, 1588, -100, +100);
         if(channel_n==C_RC_CHANNEL_YAW)
-            last_channels[channel_n] = channels[channel_n];// = c_common_utils_map(channels[channel_n], 692, 1523, -100, +100);
+            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 582, 1578, -100, +100);
         if(channel_n==C_RC_CHANNEL_PITCH)
-            last_channels[channel_n] = channels[channel_n];// = c_common_utils_map(channels[channel_n], 687, 1513, +100, -100);
+            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 583, 1586, +100, -100);
         if(channel_n==C_RC_CHANNEL_VR)
             last_channels[channel_n] = channels[channel_n];// = c_common_utils_map(channels[channel_n], 564, 1672, 0,100);
         if(channel_n==C_RC_CHANNEL_A)

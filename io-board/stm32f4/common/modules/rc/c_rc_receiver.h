@@ -28,8 +28,9 @@
 #define C_RC_CHANNEL_THROTTLE  2
 #define C_RC_CHANNEL_YAW       3
 #define C_RC_CHANNEL_A         4
-#define C_RC_CHANNEL_VR        5
-#define C_RC_CHANNEL_B         6
+#define C_RC_CHANNEL_B         5
+#define C_RC_CHANNEL_VR        6
+
 
 /* Exported macro ------------------------------------------------------------*/
 

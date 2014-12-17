@@ -124,13 +124,14 @@ void c_io_imu_init(I2C_TypeDef* I2Cx)
 	c_common_i2c_readBytes(I2Cx_imu, GYRO_ADDR, 0x00, 1, &GYRO_ID);
 //	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0x16, 24); //24 = 0b0001 1000
 	// Low Pass Filter
-//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x1B); //fc=42Hz
+//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x1E); //fc=5Hz
+	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x1B); //fc=42Hz
 //	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x1A); //fc=98Hz
-	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 25); //fc=188Hz
+	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 25); //fc=188Hz - estava usando este
 //	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x03); //fc=256Hz
 
-	// Output data frequency (must change if the value in register 0x16 changes)
-//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 4); //f=200Hz
+	// Output data frequency (must change if the value in register 0x16 changes to fc=256Hz)
+//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X15, 4); //f=200Hz
 	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X15, 1); //f=500Hz
 //	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0x15, 9); //f=800Hz
 	// Clock selection

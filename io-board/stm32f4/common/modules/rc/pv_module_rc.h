@@ -24,8 +24,8 @@
 
 /* proVANT includes */
 #include "c_common_gpio.h"
-#include "c_rc_control.h"
-//#include "c_rc_SFC.h"
+#include "c_rc_BS_control.h"
+#include "c_rc_LQR_control.h"
 #include "c_rc_receiver.h"
 
 #include "pv_typedefs.h"

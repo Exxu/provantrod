@@ -21,7 +21,7 @@
 
 
 //numero de iteracoes para inicializar atuadores e sensores.
-#define INIT_ITERATIONS 100
+#define INIT_ITERATIONS 1000 //For a period of 5ms, it is 5 seconds
 
 /* Includes ------------------------------------------------------------------*/
 
@@ -43,7 +43,8 @@
 
 //#include "c_rc_control.h"
 #include "c_rc_receiver.h"
-#include "c_rc_SFC.h"
+#include "c_rc_LQR_control.h"
+#include "c_rc_BS_control.h"
 
 #include "pv_typedefs.h"
 #include "c_datapr_MultWii.h"
@@ -72,6 +73,8 @@
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
+
+
 
 /* Exported functions ------------------------------------------------------- */
 void module_io_init();
