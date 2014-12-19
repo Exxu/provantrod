@@ -186,8 +186,13 @@ float  c_rc_receiver_getChannel(int channel_n) {
             last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 605, 1589, +100, -100);
        	if(channel_n==C_RC_CHANNEL_ROLL)
             last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 587, 1588, -100, +100);
+//        if(channel_n==C_RC_CHANNEL_YAW)
+//            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 582, 1578, -100, +100);
         if(channel_n==C_RC_CHANNEL_YAW)
-            last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 582, 1578, -100, +100);
+            if(channels[channel_n]>1000)
+            	channels[channel_n]=last_channels[channel_n] = 0;
+            else
+            	channels[channel_n]=last_channels[channel_n] = 1;
         if(channel_n==C_RC_CHANNEL_PITCH)
             last_channels[channel_n] = channels[channel_n] = c_common_utils_map(channels[channel_n], 583, 1586, +100, -100);
         if(channel_n==C_RC_CHANNEL_VR)

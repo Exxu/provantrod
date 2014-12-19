@@ -31,6 +31,7 @@
 #define PV_CONSTANT_G    9.81 //gravity
 
 #define RAD_TO_DEG 57.2957795131f
+#define DEG_TO_RAD 0.017453292519943f
 
 #ifndef M_PI
 #define M_PI 3.14159265359

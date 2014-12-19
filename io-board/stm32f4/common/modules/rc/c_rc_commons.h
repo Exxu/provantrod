@@ -28,16 +28,16 @@
 // PID parameters for the backstepping control
 //#ifdef BACKSTEPPING_ATTITUDE_HEIGHT_CONTROL
 #if 1
-	 #define KPPHI    	20.0f
-	 #define KVPHI    	8.0f
-	 #define KIPHI	 	0.0f
-	 #define KPTHETA  	25.0f
-	 #define KVTHETA  	8.0f
-	 #define KITHETA	0.0f
+	 #define KPPHI    	50.0f
+	 #define KVPHI    	5.0f
+	 #define KIPHI	 	10.0f
+	 #define KPTHETA  	40.0f
+	 #define KVTHETA  	5.0f
+	 #define KITHETA	10.0f
 	 #define KPPSI    	18.0f
 	 #define KVPSI    	6.0f
 	 #define KIPSI	 	0.0f
-	 #define KVZ		6.0f
+	 #define KVZ		0.0f
 	 #define KPZ		18.0f
   #else
 	#define KPPHI    	86.0f
@@ -53,6 +53,13 @@
 	#define KPZ			18.0f
 #endif
 //#endif
+
+ //keeping here to keep it practical, move it to sensors after test
+//#define SONAR_FILTER_1_ORDER_10HZ
+#define SONAR_FILTER_2_ORDER_10HZ
+
+#define LIMIT_SONAR_VAR
+#define SONAR_MAX_VAR		0.2
 
 //Maximum value for the thrust when in manual height mode
 #define THRUST_ROTOR_MAX			14.2f   // Newtons. It is the maximum thrust that can be appliesd to a rotor
@@ -76,12 +83,22 @@
 #define INT_Z_LOWER_ER_LIMIT		-0.03
 #define INT_Z_UPPER_ER_LIMIT		 0.03
 
- // Reference limits for the radio controller
-#define REF_ROLL_MAX		0.1 //radians
-#define REF_PITCH_MAX		0.1 //radians
-#define REF_YAW_MAX			0.1 //radians
-#define REF_Z_MAX			0.5 //meters
 
+#define ATTITUDE_REF_CONTINOUS
+//#define ATTITUDE_REF_INCREMENTAL
+
+
+ // Reference limits for the radio controller
+#ifdef ATTITUDE_REF_CONTINOUS
+	#define REF_ROLL_MAX		0.5 //radians
+	#define REF_PITCH_MAX		0.5 //radians
+	#define REF_YAW_MAX			0.0 //radians
+	#define REF_Z_MAX			0.5 //meters
+#elif defined ATTITUDE_REF_INCREMENTAL
+	#define REF_ROLL_INCREMENT	0.5*DEG_TO_RAD
+	#define REF_PITCH_INCREMENT	0.5*DEG_TO_RAD
+	#define REF_YAW_INCREMENT	0.5*DEG_TO_RAD
+#endif
  //Enable the integration in relation to time
 //#define ENABLE_INT_Z
 #define ENABLE_INT_ROLL

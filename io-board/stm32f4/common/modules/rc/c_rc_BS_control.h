@@ -33,7 +33,8 @@ pv_msg_io_actuation c_rc_BS_AH_controller(pv_msg_datapr_attitude attitude,
 				  pv_msg_datapr_position position,
 				  pv_msg_datapr_position position_reference,
 				  float throttle_control,
-				  bool manual_height_control);
+				  bool manual_height_control,
+				  bool enable_integration);
 
 
 #ifdef __cplusplus

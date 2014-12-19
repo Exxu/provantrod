@@ -66,7 +66,7 @@ c_rc_stability_error BS_AH_last_error={0};
 /* Private function prototypes -----------------------------------------------*/
 float32_t c_rc_BS_AH_altitude_controller_step(float altitude, float altitude_reference, float rateOfClimb, float rateOfClimb_reference,
 									pv_msg_datapr_attitude attitude);
-arm_matrix_instance_f32 c_rc_BS_AH_PD_gains_step(pv_msg_datapr_attitude attitude, pv_msg_datapr_attitude attitude_reference);
+arm_matrix_instance_f32 c_rc_BS_AH_PD_gains_step(pv_msg_datapr_attitude attitude, pv_msg_datapr_attitude attitude_reference, bool enable_integrators);
 arm_matrix_instance_f32 c_rc_BS_AH_torque_calculation_step(pv_msg_datapr_attitude attitude, arm_matrix_instance_f32 gamma);
 pv_msg_io_actuation c_rc_BS_AH_actuators_signals_step(arm_matrix_instance_f32 tau, float Fzb);
 arm_matrix_instance_f32 c_rc_BS_AH_inertia_matrix(pv_msg_datapr_attitude attitude);
@@ -110,11 +110,13 @@ float c_rc_BS_AH_Fzb_RC(float throttle_control){
 void c_rc_BS_AH_integrate_error(c_rc_stability_error error, float sample_time){
 
 	#ifdef ENABLE_INT_ROLL
-		BS_AH_integrated_error.roll = c_rc_saturation( c_rc_integrate_trapezoidal(BS_AH_integrated_error.roll, error.roll, BS_AH_last_error.roll, sample_time), INT_ROLL_LOWER_ER_LIMIT, INT_ROLL_UPPER_ER_LIMIT);
+//		BS_AH_integrated_error.roll = c_rc_saturation( c_rc_integrate_trapezoidal(BS_AH_integrated_error.roll, error.roll, BS_AH_last_error.roll, sample_time), INT_ROLL_LOWER_ER_LIMIT, INT_ROLL_UPPER_ER_LIMIT);
+	BS_AH_integrated_error.roll = c_rc_integrate_trapezoidal(BS_AH_integrated_error.roll, error.roll, BS_AH_last_error.roll, sample_time);
 		BS_AH_last_error.roll  = error.roll;
 	#endif
 	#ifdef ENABLE_INT_PITCH
-		BS_AH_integrated_error.pitch = c_rc_saturation( c_rc_integrate_trapezoidal(BS_AH_integrated_error.pitch, error.pitch, BS_AH_last_error.pitch, sample_time), INT_PITCH_LOWER_ER_LIMIT, INT_PITCH_UPPER_ER_LIMIT);
+//		BS_AH_integrated_error.pitch = c_rc_saturation( c_rc_integrate_trapezoidal(BS_AH_integrated_error.pitch, error.pitch, BS_AH_last_error.pitch, sample_time), INT_PITCH_LOWER_ER_LIMIT, INT_PITCH_UPPER_ER_LIMIT);
+		BS_AH_integrated_error.pitch = c_rc_integrate_trapezoidal(BS_AH_integrated_error.pitch, error.pitch, BS_AH_last_error.pitch, sample_time);
 		BS_AH_last_error.pitch = error.pitch;
 	#endif
 	#ifdef ENABLE_INT_YAW
@@ -127,7 +129,7 @@ void c_rc_BS_AH_integrate_error(c_rc_stability_error error, float sample_time){
 	#endif
 }
 
-arm_matrix_instance_f32 c_rc_BS_AH_PD_gains_step(pv_msg_datapr_attitude attitude, pv_msg_datapr_attitude attitude_reference){
+arm_matrix_instance_f32 c_rc_BS_AH_PD_gains_step(pv_msg_datapr_attitude attitude, pv_msg_datapr_attitude attitude_reference, bool enable_integrators){
 	arm_matrix_instance_f32 gamma;
 	c_rc_stability_error current_error={0};
 
@@ -140,7 +142,14 @@ arm_matrix_instance_f32 c_rc_BS_AH_PD_gains_step(pv_msg_datapr_attitude attitude
 	 * BS_AH_last_error
 	 * Já guarda o valor do erro para a proxima iteracao
 	 */
-	c_rc_BS_AH_integrate_error(current_error, CONTROL_SAMPLE_TIME);
+	if (enable_integrators)
+		c_rc_BS_AH_integrate_error(current_error, CONTROL_SAMPLE_TIME);
+	else{
+		BS_AH_integrated_error.roll=0;
+		BS_AH_integrated_error.pitch=0;
+		BS_AH_integrated_error.yaw=0;
+		BS_AH_integrated_error.z=0;
+	}
 
 	//gamma1
 	gamma_f32[0] = -KPPHI * (attitude.roll - attitude_reference.roll)
@@ -306,13 +315,17 @@ pv_msg_io_actuation c_rc_BS_AH_controller(pv_msg_datapr_attitude attitude,
 				  pv_msg_datapr_position position,
 				  pv_msg_datapr_position position_reference,
 				  float throttle_control,
-				  bool manual_height_control)
+				  bool manual_height_control,
+				  bool enable_integration)
 {
 	arm_matrix_instance_f32 gamma, tau;
 	pv_msg_io_actuation actuation_signals;
 	float Fzb;
 
-	gamma = c_rc_BS_AH_PD_gains_step(attitude, attitude_reference);
+	if (enable_integration)
+		gamma = c_rc_BS_AH_PD_gains_step(attitude, attitude_reference, true);
+	else
+		gamma = c_rc_BS_AH_PD_gains_step(attitude, attitude_reference, false);
 
 	tau = c_rc_BS_AH_torque_calculation_step(attitude, gamma);
 

@@ -73,10 +73,10 @@ void module_io_init()
 	/* Inicializar os servos */
 	c_io_rx24f_init(1000000);
 	c_common_utils_delayms(2);
-//	c_io_rx24f_setSpeed(1, 200);
-//	c_io_rx24f_setSpeed(2, 200);
-	c_io_rx24f_setSpeed(1, 1023);//maximum speed
-	c_io_rx24f_setSpeed(2, 1023);//maximum speed
+	c_io_rx24f_setSpeed(1, 200);
+	c_io_rx24f_setSpeed(2, 200);
+//	c_io_rx24f_setSpeed(1, 1023);//maximum speed
+//	c_io_rx24f_setSpeed(2, 1023);//maximum speed
 	c_common_utils_delayms(2);
 	/* CW Compliance Margin e CCW Compliance margin */
 	c_io_rx24f_write(1, 0x1A,0x03);
@@ -138,8 +138,8 @@ unsigned char setPointESC_Forca(float forca){
 
 
 
-
-float last_sonar_raw=0.0f;
+// Filter memory
+float sonar_raw_k_minus_1=0.0f, sonar_raw_k_minus_2=0.0f, sonar_filtered_k_minus_1=0.0f, sonar_filtered_k_minus_2=0.0f, dotZ_filtered_k_minus_1=0.0f, dotZ_k_minus_1=0.0f;
 /** \brief Função principal do módulo de IO.
   * @param  None
   * @retval None
@@ -149,31 +149,34 @@ float last_sonar_raw=0.0f;
   */
 void module_io_run() 
 {
-	float accRaw[3]={0}, gyrRaw[3]={0}, magRaw[3]={0}, rpy[6] = {0};
-	int channel_A=0, channel_B=0, channel_VR=0, iterations=0;;
-	float channel_THROTTLE=0.0f, channel_ROLL=0.0f, channel_PITCH=0.0f, channel_YAW=0.0f, sonar_raw=0.0f, sonar_filtered=0.0f, dotZ, dotZ_filtered, last_dotZ;
+	bool lock_increment_roll=false, lock_increment_pitch=false, lock_increment_yaw=false, enable_integration=false;
+	float accRaw[3]={0}, gyrRaw[3]={0}, magRaw[3]={0}, rpy[6] = {0}, attitude_yaw_initial=0.0f, last_valid_sonar_raw=0.0f;
+	int channel_A=0, channel_B=0, channel_VR=0, iterations=0, channel_flight_mode=0;
+	float channel_THROTTLE=0.0f, channel_ROLL=0.0f, channel_PITCH=0.0f, channel_YAW=0.0f, sonar_raw=0.0f, sonar_filtered=0.0f, dotZ=0.0f, dotZ_filtered=0.0f;
 
 	pv_msg_io_actuation    actuation = {0,0.0f,0.0f,0.0f,0.0f};
-	pv_msg_datapr_attitude attitude  = {0}, attitude_reference = {0.03491,0.0f,0.0f,0.0f,0.0f,0.0f};//-0.0791f
-	pv_msg_datapr_position position  = {0}, position_reference = {0.0f,0.0f,0.8f,0.0f,0.0f,0.0f};
+	pv_msg_datapr_attitude attitude  = {0}, attitude_reference = {2*DEG_TO_RAD,0.0f,0.0f,0.0f,0.0f,0.0f};//roll=0.03491; pitch -0.0791f
+	pv_msg_datapr_position position  = {0}, position_reference = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
 
 	while(1)
 	{
 //		c_common_gpio_toggle(LED_builtin_io);
 		lastWakeTime = xTaskGetTickCount();
-
+		/* PARA TESTES COM OS SERVOS - DELETAR*/
+//		c_io_rx24f_move(1, 130+0);
+//		c_io_rx24f_move(2, 150+0);
+		/*-----------------------------------------*/
 //		xQueueReceive(pv_interface_io.iActuation, &iActuation, 0);
 
 		// Leitura canais do controle remoto
 		channel_A = 		(int)c_rc_receiver_getChannel(C_RC_CHANNEL_A);  //Emergency (forces the actuators to zero)
 		channel_B = 		(int)c_rc_receiver_getChannel(C_RC_CHANNEL_B);  //Switch manual/automatic height control
-//		if (channel_B) set_manual_height_control(false);
 //		channel_VR = 		(int)c_rc_receiver_getChannel(C_RC_CHANNEL_VR); //Height reference
 		channel_THROTTLE =  c_rc_receiver_getChannel(C_RC_CHANNEL_THROTTLE);//Total force in Z_i axis when in manual height control
 		if (channel_THROTTLE < 0) channel_THROTTLE = 0;
 		channel_ROLL = 		c_rc_receiver_getChannel(C_RC_CHANNEL_ROLL); 	//Roll angle reference
 		channel_PITCH = 	c_rc_receiver_getChannel(C_RC_CHANNEL_PITCH); 	//Pitch angle reference
-		channel_YAW = 		c_rc_receiver_getChannel(C_RC_CHANNEL_YAW); 	//Yaw angle reference
+		channel_flight_mode = c_rc_receiver_getChannel(C_RC_CHANNEL_YAW); 	//Yaw angle reference
 
 		// Canal A é o switch no controle remoto que deve parar totalmente o VANT, aka botao de emergencia
 		if (!channel_A && !init)
@@ -199,25 +202,70 @@ void module_io_run()
 
 
 		/// SONAR
-		#if 0
-			float k1=0.7265, k2=0.1367, k3=0.1367;
+		#if 1
+			float k1_1o_10Hz=0.7265, k2_1o_10Hz=0.1367, k3_1o_10Hz=0.1367;
+			float k1_2o_10Hz=1.56102, k2_2o_10Hz=-0.64135, k3_2o_10Hz=0.02008, k4_2o_10Hz=0.04017, k5_2o_10Hz=0.02008;
+
 
 			//Get sonar value in cm
-			sonar_raw = c_io_sonar_read()/100;//the altitude must be in meters
-			//1st order filter with fc=10Hz
-			sonar_filtered = k1*position.z + k2*sonar_raw + k3*last_sonar_raw;
-			last_sonar_raw = sonar_raw;
+			sonar_raw = (c_io_sonar_read()/100)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
+
+			#ifdef LIMIT_SONAR_VAR
+				if ( ( (last_valid_sonar_raw-SONAR_MAX_VAR)<sonar_raw && (last_valid_sonar_raw+SONAR_MAX_VAR)>sonar_raw )   || init)
+					last_valid_sonar_raw = sonar_raw;
+				else
+					sonar_raw = last_valid_sonar_raw;
+			#endif
+
+			#ifdef SONAR_FILTER_1_ORDER_10HZ
+				//1st order filter with fc=10Hz
+				sonar_filtered = k1_1o_10Hz*sonar_filtered_k_minus_1 + k2_1o_10Hz*sonar_raw + k3_1o_10Hz*sonar_raw_k_minus_1;
+				// Filter memory
+				sonar_raw_k_minus_1 = sonar_raw;
+				sonar_filtered_k_minus_1 = sonar_filtered;
+			#elif defined SONAR_FILTER_2_ORDER_10HZ
+				//1st order filter with fc=10Hz
+				sonar_filtered = k1_2o_10Hz*sonar_filtered_k_minus_1 + k2_2o_10Hz*sonar_filtered_k_minus_2 + k3_2o_10Hz*sonar_raw + k4_2o_10Hz*sonar_raw_k_minus_1 + k5_2o_10Hz*sonar_raw_k_minus_2;
+				// Filter memory
+				sonar_raw_k_minus_2 = sonar_raw_k_minus_1;
+				sonar_raw_k_minus_1 = sonar_raw;
+				sonar_filtered_k_minus_2 = sonar_filtered_k_minus_1;
+				sonar_filtered_k_minus_1 = sonar_filtered;
+			#else //If no filter is active, the result is the measurement
+				sonar_filtered = sonar_raw;
+			#endif
 
 			// Derivada = (dado_atual-dado_anterior )/(tempo entre medicoes) - fiz a derivada do sinal filtrado, REVER
 			dotZ = (sonar_filtered - position.z)/MODULE_PERIOD;
 			// 1st order filter with fc=10Hz
-			dotZ_filtered = k1*position.dotZ + k2*dotZ + k3*last_dotZ;
-			last_dotZ = dotZ;
+			dotZ_filtered = k1_1o_10Hz*dotZ_filtered_k_minus_1 + k2_1o_10Hz*dotZ + k3_1o_10Hz*dotZ_k_minus_1;
+			// Filter memory
+			dotZ_filtered_k_minus_1 = dotZ_filtered;
+			dotZ_k_minus_1 = dotZ;
 
 			//Filtered measurements
+//			position.z = sonar_filtered*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);
 			position.z = sonar_filtered;
 			position.dotZ = dotZ_filtered;
+
+//			bool teste=false;
+//		    teste = get_manual_height_control();
+			// Change to automatic height control if channel_B switch is 1
+			if (channel_flight_mode){
+				// Execute this condition only one time
+				if (get_manual_height_control()){
+					position_reference.z = sonar_filtered;
+					set_manual_height_control(false);}
+			}
+			else
+				set_manual_height_control(true);
+
 		#endif
+
+			if (channel_B)
+				enable_integration = true;
+			else
+				enable_integration = false;
 
 		/// DADOS OUT
 		if (abs2(rpy[PV_IMU_ROLL  ]-attitude.roll)>ATTITUDE_MINIMUM_STEP)
@@ -229,21 +277,51 @@ void module_io_run()
 		attitude.dotYaw   = rpy[PV_IMU_DYAW  ];
 
 		// Referencias
+#ifdef ATTITUDE_REF_INCREMENTAL
+		if (channel_ROLL>=90 && !lock_increment_roll){
+			attitude_reference.roll += REF_ROLL_INCREMENT;
+			lock_increment_roll = true;}
+		else if (channel_ROLL <= -90){
+			attitude_reference.roll -= REF_ROLL_INCREMENT;
+			lock_increment_roll = true;}
+		else
+			lock_increment_roll = false;
+
+		if (channel_PITCH>=90 && !lock_increment_pitch){
+			attitude_reference.pitch += REF_PITCH_INCREMENT;
+			lock_increment_pitch = true;}
+		else if (channel_PITCH <= -90){
+			attitude_reference.pitch -= REF_PITCH_INCREMENT;
+			lock_increment_pitch = true;}
+		else
+			lock_increment_pitch = false;
+
+		if (channel_YAW>=90 && !lock_increment_yaw){
+			attitude_reference.yaw += REF_YAW_INCREMENT;
+			lock_increment_yaw = true;}
+		else if (channel_YAW <= -90){
+			attitude_reference.yaw -= REF_YAW_INCREMENT;
+			lock_increment_yaw = true;}
+		else
+			lock_increment_yaw = false;
+
+#elif defined ATTITUDE_REF_CONTINOUS
 		attitude_reference.roll     = REF_ROLL_MAX*channel_ROLL/100;
 		attitude_reference.pitch    = REF_PITCH_MAX*channel_PITCH/100;
-		attitude_reference.yaw      = REF_YAW_MAX*channel_YAW/100;
+		attitude_reference.yaw      = attitude_yaw_initial + REF_YAW_MAX*channel_YAW/100;
+#endif
 
 //		 A referencia é a orientacao que o UAV é iniciado
-		if (init){
-			attitude_reference.yaw   = rpy[PV_IMU_YAW];
-		}
+		if (init)
+			attitude_yaw_initial	 = rpy[PV_IMU_YAW];
+
 		// CONTROLE
 		#if 1
 			if (!init){
 				#ifdef LQR_ATTITUDE_HEIGHT_CONTROL
 					iActuation = c_rc_LQR_AH_controller(attitude,attitude_reference,position,position_reference);
 				#elif defined BACKSTEPPING_ATTITUDE_HEIGHT_CONTROL
-					iActuation = c_rc_BS_AH_controller(attitude,attitude_reference,position,position_reference,channel_THROTTLE/100,get_manual_height_control());
+					iActuation = c_rc_BS_AH_controller(attitude,attitude_reference,position,position_reference,channel_THROTTLE/100,get_manual_height_control(),enable_integration);
 				#endif
 					// Ajusta o eixo de referencia do servo (montado ao contrario)
 					iActuation.servoLeft = -iActuation.servoLeft;
@@ -252,7 +330,7 @@ void module_io_run()
 
 
 		/// SERVOS
-		#if 1
+		#if 0
 		// inicializacao
 			if (securityStop){
 				c_io_rx24f_move(1, 130+0);
@@ -280,7 +358,7 @@ void module_io_run()
 			unsigned char sp_left;
 			sp_right = setPointESC_Forca(iActuation.escRightSpeed);
 			sp_left = setPointESC_Forca(iActuation.escLeftSpeed );
-		#if 1
+		#if 0
 			if (securityStop){
 				c_io_blctrl_setSpeed(1, 0 );//sp_right
 				c_common_utils_delayus(10);
@@ -311,13 +389,13 @@ void module_io_run()
 			if (init){
 				c_common_datapr_multwii_bicopter_identifier();
 	    		c_common_datapr_multwii_motor_pins();}
-		    c_common_datapr_multwii_motor(sp_left,sp_right);
+//		    c_common_datapr_multwii_motor(sp_left,sp_right);
 	    	c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG, rpy[PV_IMU_YAW  ]*RAD_TO_DEG );
-//	    	c_common_datapr_multwii_raw_imu(accRaw_scaled,gyrRaw_scaled,magRaw);
+//	    	c_common_datapr_multwii_raw_imu(accRaw,gyrRaw,magRaw);
 //	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
 //	    	c_common_datapr_multwii_servos((int)(altitude_sonar*100),(int)(position.dotZ*100));
 //	    	c_common_datapr_multwii_debug(channel_A, channel_B, channel_VR, channel_THROTTLE);
-//	    	c_common_datapr_multwii_debug(5.32, channel_ROLL*10, channel_PITCH*10, channel_YAW*10);
+	    	c_common_datapr_multwii_debug((int)(sonar_raw*1000), (int)(sonar_filtered*1000), (int)(position.z*1000), 1);
 
 	    	c_common_datapr_multwii_sendstack(USART2);
 	    	#else  
