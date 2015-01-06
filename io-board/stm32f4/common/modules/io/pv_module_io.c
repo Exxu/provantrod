@@ -149,10 +149,11 @@ float sonar_raw_k_minus_1=0.0f, sonar_raw_k_minus_2=0.0f, sonar_filtered_k_minus
   */
 void module_io_run() 
 {
-	bool lock_increment_roll=false, lock_increment_pitch=false, lock_increment_yaw=false, enable_integration=false;
-	float accRaw[3]={0}, gyrRaw[3]={0}, magRaw[3]={0}, rpy[6] = {0}, attitude_yaw_initial=0.0f, last_valid_sonar_raw=0.0f;
+	bool lock_increment_roll=false, lock_increment_pitch=false, lock_increment_yaw=false, enable_integration=false, lock_increment_z=false;
+	float accRaw[3]={0}, gyrRaw[3]={0}, magRaw[3]={0}, rpy[6] = {0}, attitude_yaw_initial=0.0f, last_valid_sonar_raw=0.0f, position_reference_initial=0.0f;
 	int channel_A=0, channel_B=0, channel_VR=0, iterations=0, channel_flight_mode=0;
-	float channel_THROTTLE=0.0f, channel_ROLL=0.0f, channel_PITCH=0.0f, channel_YAW=0.0f, sonar_raw=0.0f, sonar_filtered=0.0f, dotZ=0.0f, dotZ_filtered=0.0f;
+	float channel_THROTTLE=0.0f, channel_ROLL=0.0f, channel_PITCH=0.0f, channel_YAW=0.0f, sonar_raw=0.0f, sonar_corrected=0.0f, sonar_filtered=0.0f, dotZ=0.0f, dotZ_filtered=0.0f;
+//	float channel_THROTTLE_initial = 0.0f, throttle_moduler=0.0f;
 
 	pv_msg_io_actuation    actuation = {0,0.0f,0.0f,0.0f,0.0f};
 	pv_msg_datapr_attitude attitude  = {0}, attitude_reference = {2*DEG_TO_RAD,0.0f,0.0f,0.0f,0.0f,0.0f};//roll=0.03491; pitch -0.0791f
@@ -173,7 +174,7 @@ void module_io_run()
 		channel_B = 		(int)c_rc_receiver_getChannel(C_RC_CHANNEL_B);  //Switch manual/automatic height control
 //		channel_VR = 		(int)c_rc_receiver_getChannel(C_RC_CHANNEL_VR); //Height reference
 		channel_THROTTLE =  c_rc_receiver_getChannel(C_RC_CHANNEL_THROTTLE);//Total force in Z_i axis when in manual height control
-		if (channel_THROTTLE < 0) channel_THROTTLE = 0;
+
 		channel_ROLL = 		c_rc_receiver_getChannel(C_RC_CHANNEL_ROLL); 	//Roll angle reference
 		channel_PITCH = 	c_rc_receiver_getChannel(C_RC_CHANNEL_PITCH); 	//Pitch angle reference
 		channel_flight_mode = c_rc_receiver_getChannel(C_RC_CHANNEL_YAW); 	//Yaw angle reference
@@ -208,27 +209,29 @@ void module_io_run()
 
 
 			//Get sonar value in cm
-			sonar_raw = (c_io_sonar_read()/100)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
+			sonar_raw = c_io_sonar_read();
+			sonar_corrected = (sonar_raw/100)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
+//			sonar_raw = (c_io_sonar_read()/100)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
 
 			#ifdef LIMIT_SONAR_VAR
-				if ( ( (last_valid_sonar_raw-SONAR_MAX_VAR)<sonar_raw && (last_valid_sonar_raw+SONAR_MAX_VAR)>sonar_raw )   || init)
-					last_valid_sonar_raw = sonar_raw;
+				if ( ( (last_valid_sonar_raw-SONAR_MAX_VAR)<sonar_corrected && (last_valid_sonar_raw+SONAR_MAX_VAR)>sonar_corrected )   || init)
+					last_valid_sonar_raw = sonar_corrected;
 				else
-					sonar_raw = last_valid_sonar_raw;
+					sonar_corrected = last_valid_sonar_raw;
 			#endif
 
 			#ifdef SONAR_FILTER_1_ORDER_10HZ
 				//1st order filter with fc=10Hz
-				sonar_filtered = k1_1o_10Hz*sonar_filtered_k_minus_1 + k2_1o_10Hz*sonar_raw + k3_1o_10Hz*sonar_raw_k_minus_1;
+				sonar_filtered = k1_1o_10Hz*sonar_filtered_k_minus_1 + k2_1o_10Hz*sonar_corrected + k3_1o_10Hz*sonar_raw_k_minus_1;
 				// Filter memory
-				sonar_raw_k_minus_1 = sonar_raw;
+				sonar_raw_k_minus_1 = sonar_corrected;
 				sonar_filtered_k_minus_1 = sonar_filtered;
 			#elif defined SONAR_FILTER_2_ORDER_10HZ
 				//1st order filter with fc=10Hz
-				sonar_filtered = k1_2o_10Hz*sonar_filtered_k_minus_1 + k2_2o_10Hz*sonar_filtered_k_minus_2 + k3_2o_10Hz*sonar_raw + k4_2o_10Hz*sonar_raw_k_minus_1 + k5_2o_10Hz*sonar_raw_k_minus_2;
+				sonar_filtered = k1_2o_10Hz*sonar_filtered_k_minus_1 + k2_2o_10Hz*sonar_filtered_k_minus_2 + k3_2o_10Hz*sonar_corrected + k4_2o_10Hz*sonar_raw_k_minus_1 + k5_2o_10Hz*sonar_raw_k_minus_2;
 				// Filter memory
 				sonar_raw_k_minus_2 = sonar_raw_k_minus_1;
-				sonar_raw_k_minus_1 = sonar_raw;
+				sonar_raw_k_minus_1 = sonar_corrected;
 				sonar_filtered_k_minus_2 = sonar_filtered_k_minus_1;
 				sonar_filtered_k_minus_1 = sonar_filtered;
 			#else //If no filter is active, the result is the measurement
@@ -254,6 +257,8 @@ void module_io_run()
 			if (channel_flight_mode){
 				// Execute this condition only one time
 				if (get_manual_height_control()){
+//					position_reference_initial = sonar_filtered;
+//					channel_THROTTLE_initial=channel_THROTTLE/100;
 					position_reference.z = sonar_filtered;
 					set_manual_height_control(false);}
 			}
@@ -308,12 +313,27 @@ void module_io_run()
 #elif defined ATTITUDE_REF_CONTINOUS
 		attitude_reference.roll     = REF_ROLL_MAX*channel_ROLL/100;
 		attitude_reference.pitch    = REF_PITCH_MAX*channel_PITCH/100;
-		attitude_reference.yaw      = attitude_yaw_initial + REF_YAW_MAX*channel_YAW/100;
+		attitude_reference.yaw      = attitude_yaw_initial;// + REF_YAW_MAX*channel_YAW/100;
+
+//		if (!get_manual_height_control()){
+//			throttle_moduler=(channel_THROTTLE/100)-channel_THROTTLE_initial;
+//			position_reference.z = position_reference_initial + REF_Z_MAX*throttle_moduler;}
+//			if (channel_THROTTLE>=90 && !lock_increment_z){
+//				position_reference.z += REF_Z_INCREMENT;
+//				lock_increment_z = true;}
+//			else if (channel_THROTTLE <= -90 && !lock_increment_z){
+//				position_reference.z -= REF_Z_INCREMENT;
+//				lock_increment_z = true;}
+//			else if (channel_THROTTLE>=-90 && channel_THROTTLE<=90)
+//				lock_increment_z = false;
+
 #endif
 
 //		 A referencia é a orientacao que o UAV é iniciado
 		if (init)
 			attitude_yaw_initial	 = rpy[PV_IMU_YAW];
+
+		if (channel_THROTTLE < 0) channel_THROTTLE = 0;
 
 		// CONTROLE
 		#if 1
@@ -330,7 +350,7 @@ void module_io_run()
 
 
 		/// SERVOS
-		#if 0
+		#if 1
 		// inicializacao
 			if (securityStop){
 				c_io_rx24f_move(1, 130+0);
@@ -358,7 +378,7 @@ void module_io_run()
 			unsigned char sp_left;
 			sp_right = setPointESC_Forca(iActuation.escRightSpeed);
 			sp_left = setPointESC_Forca(iActuation.escLeftSpeed );
-		#if 0
+		#if 1
 			if (securityStop){
 				c_io_blctrl_setSpeed(1, 0 );//sp_right
 				c_common_utils_delayus(10);
@@ -395,7 +415,7 @@ void module_io_run()
 //	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
 //	    	c_common_datapr_multwii_servos((int)(altitude_sonar*100),(int)(position.dotZ*100));
 //	    	c_common_datapr_multwii_debug(channel_A, channel_B, channel_VR, channel_THROTTLE);
-	    	c_common_datapr_multwii_debug((int)(sonar_raw*1000), (int)(sonar_filtered*1000), (int)(position.z*1000), 1);
+	    	c_common_datapr_multwii_debug((int)(sonar_raw*10), (int)(sonar_corrected*1000), (int)(sonar_filtered*1000), 1);
 
 	    	c_common_datapr_multwii_sendstack(USART2);
 	    	#else  

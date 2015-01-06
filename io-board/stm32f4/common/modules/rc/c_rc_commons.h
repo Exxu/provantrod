@@ -30,6 +30,18 @@
 #if 1
 	 #define KPPHI    	50.0f
 	 #define KVPHI    	5.0f
+	 #define KIPHI	 	6.0f
+	 #define KPTHETA  	40.0f
+	 #define KVTHETA  	5.0f
+	 #define KITHETA	6.0f
+	 #define KPPSI    	18.0f
+	 #define KVPSI    	6.0f
+	 #define KIPSI	 	0.0f
+	 #define KVZ		0.0f
+	 #define KPZ		10.0f
+  #else
+	 #define KPPHI    	50.0f
+	 #define KVPHI    	5.0f
 	 #define KIPHI	 	10.0f
 	 #define KPTHETA  	40.0f
 	 #define KVTHETA  	5.0f
@@ -38,19 +50,7 @@
 	 #define KVPSI    	6.0f
 	 #define KIPSI	 	0.0f
 	 #define KVZ		0.0f
-	 #define KPZ		18.0f
-  #else
-	#define KPPHI    	86.0f
-	#define KVPHI    	10.0f
-	#define KIPHI	 	3.0f
-	#define KPTHETA  	86.0f
-	#define KVTHETA  	10.0f
-	#define KITHETA		3.0f
-	#define KPPSI    	18.0f
-	#define KVPSI    	6.0f
-	#define KIPSI	 	0.0f
-	#define KVZ			6.0f
-	#define KPZ			18.0f
+	 #define KPZ		10.0f
 #endif
 //#endif
 
@@ -59,7 +59,7 @@
 #define SONAR_FILTER_2_ORDER_10HZ
 
 #define LIMIT_SONAR_VAR
-#define SONAR_MAX_VAR		0.2
+#define SONAR_MAX_VAR		0.1
 
 //Maximum value for the thrust when in manual height mode
 #define THRUST_ROTOR_MAX			14.2f   // Newtons. It is the maximum thrust that can be appliesd to a rotor
@@ -90,10 +90,11 @@
 
  // Reference limits for the radio controller
 #ifdef ATTITUDE_REF_CONTINOUS
-	#define REF_ROLL_MAX		0.5 //radians
-	#define REF_PITCH_MAX		0.5 //radians
+	#define REF_ROLL_MAX		0.3 //radians
+	#define REF_PITCH_MAX		0.3 //radians
 	#define REF_YAW_MAX			0.0 //radians
 	#define REF_Z_MAX			0.5 //meters
+	#define REF_Z_INCREMENT     0.05 //meters
 #elif defined ATTITUDE_REF_INCREMENTAL
 	#define REF_ROLL_INCREMENT	0.5*DEG_TO_RAD
 	#define REF_PITCH_INCREMENT	0.5*DEG_TO_RAD
