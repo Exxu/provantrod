@@ -65,7 +65,7 @@
 //#define SONAR_FILTER_2_ORDER_10HZ
 
 #define LIMIT_SONAR_VAR
-#define SONAR_MAX_VAR		0.2
+#define SONAR_MAX_VAR		0.3
 
 //Maximum value for the thrust when in manual height mode
 #define THRUST_ROTOR_MAX			14.2f   // Newtons. It is the maximum thrust that can be appliesd to a rotor

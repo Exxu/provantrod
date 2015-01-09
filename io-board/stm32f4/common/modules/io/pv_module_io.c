@@ -182,6 +182,10 @@ void module_io_run()
 		// Canal A é o switch no controle remoto que deve parar totalmente o VANT, aka botao de emergencia
 		if (!channel_A && !init)
 			securityStop = 1;
+		else
+			if (channel_A)
+				securityStop = 0;
+
 
 		if (iterations > INIT_ITERATIONS)
 			init = 0; //Sai da fase de inicializacao
@@ -217,7 +221,8 @@ void module_io_run()
 				//if (init)
 					//last_valid_sonar_raw = sonar_corrected;
 
-				if ( ( (last_valid_sonar_raw-SONAR_MAX_VAR)<sonar_corrected && (last_valid_sonar_raw+SONAR_MAX_VAR)>sonar_corrected ))
+//				if ( ( (last_valid_sonar_raw-SONAR_MAX_VAR)<sonar_corrected && (last_valid_sonar_raw+SONAR_MAX_VAR)>sonar_corrected ))
+				if (sonar_raw<150 )
 					last_valid_sonar_raw = sonar_corrected;
 				else
 					sonar_corrected = last_valid_sonar_raw;
@@ -420,7 +425,7 @@ void module_io_run()
 //	    	c_common_datapr_multwii_debug(channel_A, channel_B, channel_VR, channel_THROTTLE);
 //	    	c_common_datapr_multwii_debug((dotZ_filtered*1000),(iActuation.servoRight*RAD_TO_DEG*10),(sonar_filtered*100), 1);
 //	    	c_common_datapr_multwii_debug((int)((dotZ_filtered*1000)+100),(int)((iActuation.servoRight*RAD_TO_DEG*10)+100),(int)((sonar_filtered*100)+100),get_manual_height_control()+10);
-	    	c_common_datapr_multwii_debug((int)(dotZ_filtered*1000),(int)(iActuation.servoRight*RAD_TO_DEG*10),(int)(sonar_filtered*100),get_manual_height_control()+10);
+	    	c_common_datapr_multwii_debug((int)(iActuation.servoLeft*RAD_TO_DEG*10),(int)(sonar_corrected*100),(int)(sonar_raw),get_manual_height_control()+10);
 
 	    	c_common_datapr_multwii_sendstack(USART2);
 	    	#else  
