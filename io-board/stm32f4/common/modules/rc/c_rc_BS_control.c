@@ -83,7 +83,7 @@ float c_rc_BS_AH_altitude_controller_step(float altitude, float altitude_referen
 {
 	float Zeta3=0;
 
-	Zeta3 = -KPZ*(altitude - altitude_reference) - KVZ*(rateOfClimb - rateOfClimb_reference);
+	Zeta3 = -KPZ*(altitude - altitude_reference) - KVZ*(rateOfClimb - rateOfClimb_reference) -KIZ*BS_AH_integrated_error.z;
 
 	return (M * G + M * Zeta3) / (cos(attitude.roll) * cos(attitude.pitch));
 }
@@ -124,7 +124,8 @@ void c_rc_BS_AH_integrate_error(c_rc_stability_error error, float sample_time){
 		BS_AH_last_error.yaw   = error.yaw;
 	#endif
 	#ifdef ENABLE_INT_Z
-		BS_AH_integrated_error.z = c_rc_saturation( c_rc_integrate_trapezoidal(BS_AH_integrated_error.z, error.z, BS_AH_last_error.z, sample_time), INT_Z_LOWER_ER_LIMIT, INT_Z_UPPER_ER_LIMIT);
+//		BS_AH_integrated_error.z = c_rc_saturation( c_rc_integrate_trapezoidal(BS_AH_integrated_error.z, error.z, BS_AH_last_error.z, sample_time), INT_Z_LOWER_ER_LIMIT, INT_Z_UPPER_ER_LIMIT);
+		BS_AH_integrated_error.z = c_rc_integrate_trapezoidal(BS_AH_integrated_error.z, error.z, BS_AH_last_error.z, sample_time);
 		BS_AH_last_error.z   = error.z;
 	#endif
 }
