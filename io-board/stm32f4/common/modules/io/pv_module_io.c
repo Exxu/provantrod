@@ -62,7 +62,7 @@ pv_msg_io_actuation    iActuation;
 void module_io_init() 
 {
 	/* Inicialização do hardware do módulo */
-//	LED_builtin_io = c_common_gpio_init(GPIOD, GPIO_Pin_13, GPIO_Mode_OUT);
+	LED_builtin_io = c_common_gpio_init(GPIOD, GPIO_Pin_15, GPIO_Mode_OUT);
 
 	c_common_i2c_init(I2C3); //esc 
 	c_common_i2c_init(I2C1); //imu
@@ -150,10 +150,11 @@ float sonar_raw_k_minus_1=0.0f, sonar_raw_k_minus_2=0.0f, sonar_filtered_k_minus
 void module_io_run() 
 {
 	bool lock_increment_roll=false, lock_increment_pitch=false, lock_increment_yaw=false, enable_integration=false, lock_increment_z=false;
-	float accRaw[3]={0}, gyrRaw[3]={0}, magRaw[3]={0}, rpy[6] = {0}, attitude_yaw_initial=0.0f, last_valid_sonar_raw=0.0f, position_reference_initial=0.0f;
-	int channel_A=0, channel_B=0, channel_VR=0, iterations=0, channel_flight_mode=0;
-	float channel_THROTTLE=0.0f, channel_ROLL=0.0f, channel_PITCH=0.0f, channel_YAW=0.0f, sonar_raw=0.0f, sonar_corrected=0.0f, sonar_filtered=0.0f, dotZ=0.0f, dotZ_filtered=0.0f;
+	float accRaw[3]={0}, gyrRaw[3]={0}, magRaw[3]={0}, rpy[6] = {0}, attitude_yaw_initial=0.0f, last_valid_sonar_raw=0.35f, position_reference_initial=0.0f;
+	int channel_A=0, channel_B=0, channel_VR=0, iterations=0, channel_flight_mode=0, sample=0;
+	float channel_THROTTLE=0.0f, channel_ROLL=0.0f, channel_PITCH=0.0f, channel_YAW=0.0f, sonar_raw=0.0f, sonar_raw_real=0.0f, sonar_raw_filter=0.0f, sonar_corrected_debug=0.0f, sonar_corrected=0.0f, sonar_filtered=0.0f, dotZ=0.0f, dotZ_filtered=0.0f;
 //	float channel_THROTTLE_initial = 0.0f, throttle_moduler=0.0f;
+	int valid_sonar_measurements=0;
 
 	pv_msg_io_actuation    actuation = {0,0.0f,0.0f,0.0f,0.0f};
 	pv_msg_datapr_attitude attitude  = {0}, attitude_reference = {2*DEG_TO_RAD,0.0f,0.0f,0.0f,0.0f,0.0f};//roll=0.03491; pitch -0.0791f
@@ -161,7 +162,7 @@ void module_io_run()
 
 	while(1)
 	{
-//		c_common_gpio_toggle(LED_builtin_io);
+		c_common_gpio_toggle(LED_builtin_io);
 		lastWakeTime = xTaskGetTickCount();
 		/* PARA TESTES COM OS SERVOS - DELETAR*/
 //		c_io_rx24f_move(1, 130+0);
@@ -182,6 +183,10 @@ void module_io_run()
 		// Canal A é o switch no controle remoto que deve parar totalmente o VANT, aka botao de emergencia
 		if (!channel_A && !init)
 			securityStop = 1;
+		else
+			if (channel_A)
+				securityStop = 0;
+
 
 		if (iterations > INIT_ITERATIONS)
 			init = 0; //Sai da fase de inicializacao
@@ -208,16 +213,42 @@ void module_io_run()
 			float k1_2o_10Hz=1.56102, k2_2o_10Hz=-0.64135, k3_2o_10Hz=0.02008, k4_2o_10Hz=0.04017, k5_2o_10Hz=0.02008;
 
 
-			//Get sonar value in cm
-			sonar_raw = c_io_sonar_read();
-			sonar_corrected = (sonar_raw/100)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
-//			sonar_raw = (c_io_sonar_read()/100)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
+			//Get sonar value in m
+			sonar_raw_real=c_io_sonar_read();
+			sonar_raw= sonar_raw_real/100;
+
 
 			#ifdef LIMIT_SONAR_VAR
-				if ( ( (last_valid_sonar_raw-SONAR_MAX_VAR)<sonar_corrected && (last_valid_sonar_raw+SONAR_MAX_VAR)>sonar_corrected )   || init)
-					last_valid_sonar_raw = sonar_corrected;
-				else
-					sonar_corrected = last_valid_sonar_raw;
+			// corrects the measurement of sonar
+			if ( ( (last_valid_sonar_raw-SONAR_MAX_VAR)<sonar_raw && (last_valid_sonar_raw+SONAR_MAX_VAR)>sonar_raw ))
+				last_valid_sonar_raw = sonar_raw;
+			else
+				sonar_raw = last_valid_sonar_raw;
+
+			#ifdef FILTER_SONAR_100ms
+			//Measurement of sonar with the average of 20 samples
+			if (sample<=20){
+				sonar_raw_filter=sonar_raw_filter+sonar_raw;
+				sample++;
+			}else{
+				sonar_corrected_debug= sonar_raw_filter/20;
+				sonar_corrected = (sonar_corrected_debug)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
+				sample=0;
+				sonar_raw_filter=0;
+			}
+			#endif
+
+//			sonar_corrected = (sonar_raw/100)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
+//			sonar_raw = (c_io_sonar_read()/100)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
+
+//			#ifdef LIMIT_SONAR_VAR
+				//if (init)
+					//last_valid_sonar_raw = sonar_corrected;
+
+//				if ( ( (last_valid_sonar_raw-SONAR_MAX_VAR)<sonar_corrected && (last_valid_sonar_raw+SONAR_MAX_VAR)>sonar_corrected ))
+//					last_valid_sonar_raw = sonar_corrected;
+//				else
+//					sonar_corrected = last_valid_sonar_raw;
 			#endif
 
 			#ifdef SONAR_FILTER_1_ORDER_10HZ
@@ -239,7 +270,7 @@ void module_io_run()
 			#endif
 
 			// Derivada = (dado_atual-dado_anterior )/(tempo entre medicoes) - fiz a derivada do sinal filtrado, REVER
-			dotZ = (sonar_filtered - position.z)/MODULE_PERIOD;
+			dotZ = (sonar_filtered - position.z)/0.005;
 			// 1st order filter with fc=10Hz
 			dotZ_filtered = k1_1o_10Hz*dotZ_filtered_k_minus_1 + k2_1o_10Hz*dotZ + k3_1o_10Hz*dotZ_k_minus_1;
 			// Filter memory
@@ -409,13 +440,16 @@ void module_io_run()
 			if (init){
 				c_common_datapr_multwii_bicopter_identifier();
 	    		c_common_datapr_multwii_motor_pins();}
-//		    c_common_datapr_multwii_motor(sp_left,sp_right);
-	    	c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG, rpy[PV_IMU_YAW  ]*RAD_TO_DEG );
+//		    c_common_datapr_multwii_motor((int)iActuation.escLeftSpeed*100,(int)iActuation.escRightSpeed*100);
+			c_common_datapr_multwii_motor((int)(attitude_reference.roll*100),(int)(attitude_reference.pitch*100));
+			c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG*10, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG*10, rpy[PV_IMU_YAW  ]*RAD_TO_DEG*10 );
 //	    	c_common_datapr_multwii_raw_imu(accRaw,gyrRaw,magRaw);
 //	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
 //	    	c_common_datapr_multwii_servos((int)(altitude_sonar*100),(int)(position.dotZ*100));
 //	    	c_common_datapr_multwii_debug(channel_A, channel_B, channel_VR, channel_THROTTLE);
-	    	c_common_datapr_multwii_debug((int)(sonar_raw*10), (int)(sonar_corrected*1000), (int)(sonar_filtered*1000), 1);
+//	    	c_common_datapr_multwii_debug((dotZ_filtered*1000),(iActuation.servoRight*RAD_TO_DEG*10),(sonar_filtered*100), 1);
+//	    	c_common_datapr_multwii_debug((int)((dotZ_filtered*1000)+100),(int)((iActuation.servoRight*RAD_TO_DEG*10)+100),(int)((sonar_filtered*100)+100),get_manual_height_control()+10);
+			c_common_datapr_multwii_debug((int)(sonar_raw_real),(int)(sonar_raw),(int)(sonar_corrected_debug*100),(int)(sonar_corrected*100));
 
 	    	c_common_datapr_multwii_sendstack(USART2);
 	    	#else  
@@ -448,7 +482,8 @@ void module_io_run()
 //      		xQueueOverwrite(pv_interface_io.oAttitude, &oAttitude);
 //      		xQueueOverwrite(pv_interface_io.oSensorTime, &oSensorTime);
 //		}
-//		c_common_gpio_toggle(LED_builtin_io);
+		c_common_gpio_toggle(LED_builtin_io);
+
 		vTaskDelayUntil( &lastWakeTime, (MODULE_PERIOD / portTICK_RATE_MS));
 	}
 }

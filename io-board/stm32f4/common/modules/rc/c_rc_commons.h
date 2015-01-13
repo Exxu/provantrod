@@ -27,6 +27,10 @@
 
 // PID parameters for the backstepping control
 //#ifdef BACKSTEPPING_ATTITUDE_HEIGHT_CONTROL
+//Valido
+// KP=5
+// Kv=1.5
+
 #if 1
 	 #define KPPHI    	50.0f
 	 #define KVPHI    	5.0f
@@ -37,8 +41,9 @@
 	 #define KPPSI    	18.0f
 	 #define KVPSI    	6.0f
 	 #define KIPSI	 	0.0f
-	 #define KVZ		0.0f
-	 #define KPZ		10.0f
+	 #define KVZ		3.0f
+	 #define KPZ		4.5f
+	 #define KIZ		0.5f
   #else
 	 #define KPPHI    	50.0f
 	 #define KVPHI    	5.0f
@@ -51,15 +56,18 @@
 	 #define KIPSI	 	0.0f
 	 #define KVZ		0.0f
 	 #define KPZ		10.0f
+	 #define KIZ		0.5f
 #endif
 //#endif
 
  //keeping here to keep it practical, move it to sensors after test
-//#define SONAR_FILTER_1_ORDER_10HZ
-#define SONAR_FILTER_2_ORDER_10HZ
+#define SONAR_FILTER_1_ORDER_10HZ
+//#define SONAR_FILTER_2_ORDER_10HZ
+#define FILTER_SONAR_100ms //average filter of 20 samples. Can be used in conjuction with the discrete filters
 
 #define LIMIT_SONAR_VAR
-#define SONAR_MAX_VAR		0.1
+#define SONAR_MAX_VAR		0.5
+
 
 //Maximum value for the thrust when in manual height mode
 #define THRUST_ROTOR_MAX			14.2f   // Newtons. It is the maximum thrust that can be appliesd to a rotor
@@ -101,10 +109,10 @@
 	#define REF_YAW_INCREMENT	0.5*DEG_TO_RAD
 #endif
  //Enable the integration in relation to time
-//#define ENABLE_INT_Z
-#define ENABLE_INT_ROLL
-#define ENABLE_INT_PITCH
-//#define ENABLE_INT_YAW
+#define ENABLE_INT_Z
+// #define ENABLE_INT_ROLL
+// #define ENABLE_INT_PITCH
+// #define ENABLE_INT_YAW
 
 
 #ifdef STABILITY_CONTROL
