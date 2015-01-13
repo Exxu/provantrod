@@ -63,9 +63,11 @@
  //keeping here to keep it practical, move it to sensors after test
 #define SONAR_FILTER_1_ORDER_10HZ
 //#define SONAR_FILTER_2_ORDER_10HZ
+#define FILTER_SONAR_100ms //average filter of 20 samples. Can be used in conjuction with the discrete filters
 
 #define LIMIT_SONAR_VAR
-#define SONAR_MAX_VAR		0.3
+#define SONAR_MAX_VAR		0.5
+
 
 //Maximum value for the thrust when in manual height mode
 #define THRUST_ROTOR_MAX			14.2f   // Newtons. It is the maximum thrust that can be appliesd to a rotor
