@@ -18,7 +18,6 @@
   *  \brief Funções para uso da I2C (I2C1)
   *
   *  \todo Embutir timeouts nos whiles (travam a thread quando o dipositivo desejado não está no bus).
-  *  \todo Colocar 	taskENTER_CRITICAL() na funcao start e taskEXIT_CRITICAL() no fim da funcao stop
   *
   *  Posto que apenas a I2C1 será usada, as funções terão esta "hard-coded", via define:
   *
@@ -30,7 +29,7 @@
   *  \code{.c}
   *  #define SLAVE_ADDRESS 0x3D // the slave address (example)
   *
-  *	 int main(void){
+  *  int main(void){
   *
   *        init_I2C1(); // initialize I2C peripheral
   *
@@ -39,7 +38,7 @@
   *        while(1){
   *
   *                c_common_i2c_start(SLAVE_ADDRESS<<1, I2C_Direction_Transmitter); // start a transmission in Master transmitter mode
-  *                																	// shifts address for 7 bit mode (makes room for R/W bit)
+  *                                                 // shifts address for 7 bit mode (makes room for R/W bit)
   *                c_common_i2c_write(0x20); // write one byte to the slave
   *                c_common_i2c_write(0x03); // write another byte to the slave
   *                c_common_i2c_stop(); // stop the transmission
@@ -48,13 +47,13 @@
   *                received_data[0] = I2C_read_ack(I2C1); // read one byte and request another byte
   *                received_data[1] = I2C_read_nack(I2C1); // read one byte and don't request another byte, stop transmission
   *       }
-  *	 }
-  *	 \endcode
+  *  }
+  *  \endcode
   *  @{
   */
 
 /* Private typedef -----------------------------------------------------------*/
-//#define I2Cx 	I2C1 
+//#define I2Cx  I2C1 
 long whileTimeoutCounter = 0;
 long timeoutCounter = 0;
 bool lastTimeoutExpired  = 0;
@@ -226,17 +225,17 @@ void c_common_i2c_init(I2C_TypeDef* I2Cx){
 /** \brief Emite uma condição de início de transmissão e envia o endereço do escravo com o bit de R/W.
  *
  * @param I2Cx  I2C a ser utilizada.
- * @param address 	Endereço de 7 bits do escravo.
- * @param direction	Direção da transmissão. Pode ser:
- * 						\em I2C_Direction_Transmitter \em para <b> Master transmitter mode </b>, ou
- * 						\em I2C_Direction_Receiver \em para <b> Master receiver mode</b>.
+ * @param address   Endereço de 7 bits do escravo.
+ * @param direction Direção da transmissão. Pode ser:
+ *            \em I2C_Direction_Transmitter \em para <b> Master transmitter mode </b>, ou
+ *            \em I2C_Direction_Receiver \em para <b> Master receiver mode</b>.
  */
 void c_common_i2c_start(I2C_TypeDef* I2Cx, uint8_t address, uint8_t direction)
 {
     taskENTER_CRITICAL();
         // wait until I2C1 is not busy anymore
-		timeoutCounter = c_common_utils_millis();
-//		timeoutCounter = c_common_utils_micros();
+    timeoutCounter = c_common_utils_millis();
+//    timeoutCounter = c_common_utils_micros();
         while(while_timeout(I2C_GetFlagStatus(I2Cx, I2C_FLAG_BUSY), timeoutCounter));
 
         // Send I2C1 START condition
@@ -248,24 +247,24 @@ void c_common_i2c_start(I2C_TypeDef* I2Cx, uint8_t address, uint8_t direction)
         while(while_timeout(!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_MODE_SELECT), timeoutCounter));
 
         if(!lastTimeoutExpired) {
-			// Send slave Address for write
-			I2C_Send7bitAddress(I2Cx, address, direction);
+      // Send slave Address for write
+      I2C_Send7bitAddress(I2Cx, address, direction);
 
-			/* wait for I2C1 EV6, check if
-			 * either Slave has acknowledged Master transmitter or
-			 * Master receiver mode, depending on the transmission
-			 * direction
-			 */
-			if(direction == I2C_Direction_Transmitter){
-					timeoutCounter = c_common_utils_millis();
-//					timeoutCounter = c_common_utils_micros();
-					while(while_timeout(!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED), timeoutCounter));
-			}
-			else if(direction == I2C_Direction_Receiver){
-					timeoutCounter = c_common_utils_millis();
-//					timeoutCounter = c_common_utils_micros();
-					while(while_timeout(!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED), timeoutCounter));
-			}
+      /* wait for I2C1 EV6, check if
+       * either Slave has acknowledged Master transmitter or
+       * Master receiver mode, depending on the transmission
+       * direction
+       */
+      if(direction == I2C_Direction_Transmitter){
+          timeoutCounter = c_common_utils_millis();
+//          timeoutCounter = c_common_utils_micros();
+          while(while_timeout(!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED), timeoutCounter));
+      }
+      else if(direction == I2C_Direction_Receiver){
+          timeoutCounter = c_common_utils_millis();
+//          timeoutCounter = c_common_utils_micros();
+          while(while_timeout(!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED), timeoutCounter));
+      }
         }
 }
 
@@ -288,7 +287,7 @@ void c_common_i2c_write(I2C_TypeDef* I2Cx, uint8_t data) {
  * @retval Byte lido.
  */
 uint8_t c_common_i2c_readAck(I2C_TypeDef* I2Cx) {
-		uint8_t data = 0x00;
+    uint8_t data = 0x00;
         // enable acknowledge of recieved data
         I2C_AcknowledgeConfig(I2Cx, ENABLE);
         // wait until one byte has been received
@@ -297,7 +296,7 @@ uint8_t c_common_i2c_readAck(I2C_TypeDef* I2Cx) {
         while(while_timeout(!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_RECEIVED), timeoutCounter));
         // read data from I2C data register and return data byte
         if(!lastTimeoutExpired)
-        	data = I2C_ReceiveData(I2Cx);
+          data = I2C_ReceiveData(I2Cx);
         return data;
 }
 
@@ -307,7 +306,7 @@ uint8_t c_common_i2c_readAck(I2C_TypeDef* I2Cx) {
  * @retval Byte lido.
  */
 uint8_t c_common_i2c_readNack(I2C_TypeDef* I2Cx) {
-		uint8_t data = 0x00;
+    uint8_t data = 0x00;
         // disabe acknowledge of received data
         // nack also generates stop condition after last byte received
         // see reference manual for more info
@@ -319,7 +318,7 @@ uint8_t c_common_i2c_readNack(I2C_TypeDef* I2Cx) {
         while(while_timeout(!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_RECEIVED), timeoutCounter));
         // read data from I2C data register and return data byte
         if(!lastTimeoutExpired)
-        	data = I2C_ReceiveData(I2Cx);
+          data = I2C_ReceiveData(I2Cx);
         return data;
 }
 
@@ -334,30 +333,30 @@ void c_common_i2c_stop(I2C_TypeDef* I2Cx) {
 
 /** \brief Lê uma quantidade de bytes de um dado endereço em um determinado dispositivo.
  *
- *	Exemplo: lê 1 byte a partir do endereço de memória 0x00 do dispositivo com endereço
- *	0x68 no barramento, e salva o resultado em ITG3205_ID.
- *	\code{.c}
- *	c_common_i2c_readBytes(0x68, 0x00, 1, &ITG3205_ID);
- *	\endcode
+ *  Exemplo: lê 1 byte a partir do endereço de memória 0x00 do dispositivo com endereço
+ *  0x68 no barramento, e salva o resultado em ITG3205_ID.
+ *  \code{.c}
+ *  c_common_i2c_readBytes(0x68, 0x00, 1, &ITG3205_ID);
+ *  \endcode
  *
  *  @param I2Cx  I2C a ser utilizada.
- *	@param device Endereço do dispositivo no barramento.
- *	@param address Endereço de memória a ser lido (comando antes da leitura).
- *	@param bytesToRead Quantos bytes são esperados.
- *	@param recvBuffer Ponteiro para um buffer com tamanho mínimo de \b bytesToRead, no qual a resposta será armazenada.
+ *  @param device Endereço do dispositivo no barramento.
+ *  @param address Endereço de memória a ser lido (comando antes da leitura).
+ *  @param bytesToRead Quantos bytes são esperados.
+ *  @param recvBuffer Ponteiro para um buffer com tamanho mínimo de \b bytesToRead, no qual a resposta será armazenada.
  *
  */
 void c_common_i2c_readBytes(I2C_TypeDef* I2Cx, uint8_t device, uint8_t address, char bytesToRead, uint8_t * recvBuffer) {
-	c_common_i2c_start(I2Cx, device<<1, I2C_Direction_Transmitter);
-	c_common_i2c_write(I2Cx, address);
-	c_common_i2c_stop(I2Cx);
+  c_common_i2c_start(I2Cx, device<<1, I2C_Direction_Transmitter);
+  c_common_i2c_write(I2Cx, address);
+  c_common_i2c_stop(I2Cx);
 
-	c_common_i2c_start(I2Cx, device<<1, I2C_Direction_Receiver);
-	for(int i=0; i<bytesToRead-1; i++)
-		recvBuffer[i] = c_common_i2c_readAck(I2Cx);
+  c_common_i2c_start(I2Cx, device<<1, I2C_Direction_Receiver);
+  for(int i=0; i<bytesToRead-1; i++)
+    recvBuffer[i] = c_common_i2c_readAck(I2Cx);
 
-	recvBuffer[bytesToRead-1] = c_common_i2c_readNack(I2Cx);
-	c_common_i2c_stop(I2Cx);
+  recvBuffer[bytesToRead-1] = c_common_i2c_readNack(I2Cx);
+  c_common_i2c_stop(I2Cx);
 }
 
 /** \brief Escreve um byte num dispositivo com um dado endereço.
@@ -368,10 +367,10 @@ void c_common_i2c_readBytes(I2C_TypeDef* I2Cx, uint8_t device, uint8_t address, 
  * @param byteToWrite Byte a ser escrito.
  */
 void c_common_i2c_writeByte(I2C_TypeDef* I2Cx, uint8_t device, uint8_t address, uint8_t byteToWrite) {
-	c_common_i2c_start(I2Cx, device<<1, I2C_Direction_Transmitter);
-	c_common_i2c_write(I2Cx, address);
-	c_common_i2c_write(I2Cx, byteToWrite);
-	c_common_i2c_stop(I2Cx);
+  c_common_i2c_start(I2Cx, device<<1, I2C_Direction_Transmitter);
+  c_common_i2c_write(I2Cx, address);
+  c_common_i2c_write(I2Cx, byteToWrite);
+  c_common_i2c_stop(I2Cx);
 }
 
 /** \brief Escreve apenas um bit em um dado endereço de um dispositivo.
@@ -383,10 +382,10 @@ void c_common_i2c_writeByte(I2C_TypeDef* I2Cx, uint8_t device, uint8_t address, 
  * @param value Valor do bit a ser escrito (0 ou 1).
  */
 void c_common_i2c_writeBit(I2C_TypeDef* I2Cx ,uint8_t device, uint8_t address, uint8_t bit, bool value) {
-	uint8_t byteBuffer;
-	c_common_i2c_readBytes(I2Cx, device, address, 1, &byteBuffer);
-	byteBuffer = (value == 0)? (byteBuffer & (1<<bit)) : (byteBuffer | (1<<bit));
-	c_common_i2c_writeByte(I2Cx, device, address,byteBuffer);
+  uint8_t byteBuffer;
+  c_common_i2c_readBytes(I2Cx, device, address, 1, &byteBuffer);
+  byteBuffer = (value == 0)? (byteBuffer & (1<<bit)) : (byteBuffer | (1<<bit));
+  c_common_i2c_writeByte(I2Cx, device, address,byteBuffer);
 }
 
 /* IRQ handlers ------------------------------------------------------------- */
