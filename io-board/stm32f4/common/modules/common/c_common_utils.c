@@ -37,6 +37,18 @@
 /* Private functions ---------------------------------------------------------*/
 /* Exported functions definitions --------------------------------------------*/
 
+/**
+ * @brief Função para reiniciar o software
+ * @details Esta função chama outra função da biblioteca CMSIS para realizar o reset da placa, fazendo desta forma que todos os valores 
+ * de variaveis sejam modificadas para o valor original do programa, assim sendo um "hard-reset".
+ * 
+ */
+void c_common_utils_resetSystem()
+{
+	NVIC_SystemReset();
+}
+
+
 /** \brief Função de mapeamento de variável de um intervalo a outro.
  *
  * Mapeia a variável \f$ x \f$ de um intervalo \f$ [in_{min} , in_{max}] \f$ para \f$ [out_{min} , out_{max}] \f$.
@@ -117,10 +129,10 @@ void c_common_utils_enSysTick() {
 	CORE_SysTickEn();
 }
 
-//long c_common_utils_micros() {
-//	CORE_SysTickEn();
-//	return (long)(CORE_GetSysTick()/(SystemCoreClock/1000000));
-//}
+long c_common_utils_micros() {
+	CORE_SysTickEn();
+	return (long)(CORE_GetSysTick()/(SystemCoreClock/1000000));
+}
 
 /** \brief Retorna o valor em milissegundos desde o disparo do SysTick.
  *
