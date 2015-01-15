@@ -155,6 +155,11 @@ void module_io_run()
 	float channel_THROTTLE=0.0f, channel_ROLL=0.0f, channel_PITCH=0.0f, channel_YAW=0.0f, sonar_raw=0.0f, sonar_raw_real=0.0f, sonar_raw_filter=0.0f, sonar_corrected_debug=0.0f, sonar_corrected=0.0f, sonar_filtered=0.0f, dotZ=0.0f, dotZ_filtered=0.0f;
 //	float channel_THROTTLE_initial = 0.0f, throttle_moduler=0.0f;
 	int valid_sonar_measurements=0;
+	int n_valid_samples=0;
+	float height_acc=0;
+	int count=0;
+	int n_valid_samples=0;
+
 
 	pv_msg_io_actuation    actuation = {0,0.0f,0.0f,0.0f,0.0f};
 	pv_msg_datapr_attitude attitude  = {0}, attitude_reference = {2*DEG_TO_RAD,0.0f,0.0f,0.0f,0.0f,0.0f};//roll=0.03491; pitch -0.0791f
@@ -217,39 +222,70 @@ void module_io_run()
 			sonar_raw_real=c_io_sonar_read();
 			sonar_raw= sonar_raw_real/100;
 
+		#ifdef LIMIT_SONAR_VAR
+#define SONAR_AVERAGE_WINDOW 20
 
-			#ifdef LIMIT_SONAR_VAR
-			// corrects the measurement of sonar
-			if ( ( (last_valid_sonar_raw-SONAR_MAX_VAR)<sonar_raw && (last_valid_sonar_raw+SONAR_MAX_VAR)>sonar_raw ))
-				last_valid_sonar_raw = sonar_raw;
-			else
-				sonar_raw = last_valid_sonar_raw;
 
-			#ifdef FILTER_SONAR_100ms
-			//Measurement of sonar with the average of 20 samples
-			if (sample<=20){
-				sonar_raw_filter=sonar_raw_filter+sonar_raw;
+			// height obtained from integration the accelerometers
+//			height_acc = c_datapr_filter_estimate_height_acc(accRaw, rpy);
+
+			if (sample<=SONAR_AVERAGE_WINDOW){
+				if ( ( (position_reference.z-SONAR_MAX_VAR)<sonar_raw && (position_reference.z+SONAR_MAX_VAR)>sonar_raw )){
+//					last_valid_sonar_raw = sonar_raw;
+					sonar_raw_filter=sonar_raw_filter+sonar_raw;
+					n_valid_samples++;
+				}
 				sample++;
-			}else{
-				sonar_corrected_debug= sonar_raw_filter/20;
-				sonar_corrected = (sonar_corrected_debug)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
+			}
+			else{
+				if (n_valid_samples <= 0)
+					sonar_corrected= last_valid_sonar_raw;
+				else{
+					sonar_corrected_debug= sonar_raw_filter/n_valid_samples;
+					sonar_corrected = (sonar_corrected_debug)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
+				}
+
 				sample=0;
 				sonar_raw_filter=0;
+				n_valid_samples=0;
 			}
-			#endif
+
+
+
+
+//			#ifdef LIMIT_SONAR_VAR
+//			// corrects the measurement of sonar
+//			if ( ( (last_valid_sonar_raw-SONAR_MAX_VAR)<sonar_raw && (last_valid_sonar_raw+SONAR_MAX_VAR)>sonar_raw ))
+//				last_valid_sonar_raw = sonar_raw;
+//			else
+//				sonar_raw = last_valid_sonar_raw;
+//			#endif
+//
+//			#ifdef FILTER_SONAR_100ms
+//			//Measurement of sonar with the average of 20 samples
+//			if (sample<=20){
+//				sonar_raw_filter=sonar_raw_filter+sonar_raw;
+//				sample++;
+//			}else{
+//				sonar_corrected_debug= sonar_raw_filter/20;
+//				sonar_corrected = (sonar_corrected_debug)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
+//				sample=0;
+//				sonar_raw_filter=0;
+//			}
+//			#endif
 
 //			sonar_corrected = (sonar_raw/100)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
 //			sonar_raw = (c_io_sonar_read()/100)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
 
 //			#ifdef LIMIT_SONAR_VAR
-				//if (init)
-					//last_valid_sonar_raw = sonar_corrected;
-
+//				if (init)
+//					last_valid_sonar_raw = sonar_corrected;
+//
 //				if ( ( (last_valid_sonar_raw-SONAR_MAX_VAR)<sonar_corrected && (last_valid_sonar_raw+SONAR_MAX_VAR)>sonar_corrected ))
 //					last_valid_sonar_raw = sonar_corrected;
 //				else
 //					sonar_corrected = last_valid_sonar_raw;
-			#endif
+//			#endif
 
 			#ifdef SONAR_FILTER_1_ORDER_10HZ
 				//1st order filter with fc=10Hz
@@ -266,7 +302,7 @@ void module_io_run()
 				sonar_filtered_k_minus_2 = sonar_filtered_k_minus_1;
 				sonar_filtered_k_minus_1 = sonar_filtered;
 			#else //If no filter is active, the result is the measurement
-				sonar_filtered = sonar_raw;
+				sonar_filtered = sonar_corrected;
 			#endif
 
 			// Derivada = (dado_atual-dado_anterior )/(tempo entre medicoes) - fiz a derivada do sinal filtrado, REVER
@@ -282,19 +318,27 @@ void module_io_run()
 			position.z = sonar_filtered;
 			position.dotZ = dotZ_filtered;
 
-//			bool teste=false;
-//		    teste = get_manual_height_control();
+//			if (count>=200){
+//				reset_height_estimation(position.z, position.dotZ);
+//				count=0;
+//			}
+//			else
+//				count++;
+
+
 			// Change to automatic height control if channel_B switch is 1
 			if (channel_flight_mode){
 				// Execute this condition only one time
 				if (get_manual_height_control()){
 //					position_reference_initial = sonar_filtered;
 //					channel_THROTTLE_initial=channel_THROTTLE/100;
-					position_reference.z = sonar_filtered;
+//					position_reference.z = sonar_filtered;
 					set_manual_height_control(false);}
 			}
-			else
+			else{
 				set_manual_height_control(true);
+				position_reference.z = sonar_filtered;
+			}
 
 		#endif
 
@@ -441,7 +485,7 @@ void module_io_run()
 				c_common_datapr_multwii_bicopter_identifier();
 	    		c_common_datapr_multwii_motor_pins();}
 //		    c_common_datapr_multwii_motor((int)iActuation.escLeftSpeed*100,(int)iActuation.escRightSpeed*100);
-			c_common_datapr_multwii_motor((int)(attitude_reference.roll*100),(int)(attitude_reference.pitch*100));
+			c_common_datapr_multwii_motor((int)(1),(int)(10));
 			c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG*10, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG*10, rpy[PV_IMU_YAW  ]*RAD_TO_DEG*10 );
 //	    	c_common_datapr_multwii_raw_imu(accRaw,gyrRaw,magRaw);
 //	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
@@ -449,7 +493,7 @@ void module_io_run()
 //	    	c_common_datapr_multwii_debug(channel_A, channel_B, channel_VR, channel_THROTTLE);
 //	    	c_common_datapr_multwii_debug((dotZ_filtered*1000),(iActuation.servoRight*RAD_TO_DEG*10),(sonar_filtered*100), 1);
 //	    	c_common_datapr_multwii_debug((int)((dotZ_filtered*1000)+100),(int)((iActuation.servoRight*RAD_TO_DEG*10)+100),(int)((sonar_filtered*100)+100),get_manual_height_control()+10);
-			c_common_datapr_multwii_debug((int)(sonar_raw_real),(int)(sonar_raw),(int)(sonar_corrected_debug*100),(int)(sonar_corrected*100));
+			c_common_datapr_multwii_debug((int)(sonar_raw_real),(int)(dotZ_filtered*100),(int)(sonar_filtered*100),(int)(sonar_corrected*100));
 
 	    	c_common_datapr_multwii_sendstack(USART2);
 	    	#else  

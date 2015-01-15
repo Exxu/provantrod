@@ -14,6 +14,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_conf.h"
 #include <math.h>
+#include "c_rc_commons.h"
 
 
 #ifdef __cplusplus
@@ -22,23 +23,14 @@
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
-
- /* Se ID for zero entao filtragem do componente somente retorna o valor passado,
- utilizado para testes*/
-// #define FILTER_GYRO_LOW_BUTTER_1OD      //1st order lowpass butterworth filter with f=20 Hz
-   #define FILTER_GYRO_LOW_BUTTER_1OD_5HZ      //1st order lowpass butterworth filter with f=5 Hz
-//#define FILTER_GYRO_LOW_BUTTER_1OD_10HZ      //1st order lowpass butterworth filter with f=5 Hz
-// #define FILTER_GYRO_BAND_BUTTER_6OD      //1st order lowpass butterworth filter with f=20 Hz
- #define FILTER_ACC_LOW_BUTTER_2OD_5HZ      //2nd order lowpass butterworth filter with f=5 Hz
- #define FILTER_SONAR_ID			//TODO comentar
-
 /* Exported macro ------------------------------------------------------------*/
 
 
 /* Exported functions ------------------------------------------------------- */
- int c_datapr_filter_gyro(float *raw_gyro, float *sinal_filtrado);
- float c_datapr_filter_sonar(float raw_sonar);
- int c_datapr_filter_acc(float *raw_acc, float *sinal_filtrado);
+
+ // Integrate the accelerometer data two times to obtain the estimated height
+ float c_datapr_filter_estimate_height_acc(float *raw_acc, float *attitude);
+ void reset_height_estimation(float new_initial_height, float new_initial_velocity_z);
 
 #ifdef __cplusplus
 }

@@ -54,7 +54,7 @@
 //#include "c_datapr_MadgwickAHRS.h"
 
 /* Filtro */
-//#include "c_datapr_filter.h"
+#include "c_datapr_filter.h"
 
 
 /* Exported types ------------------------------------------------------------*/
