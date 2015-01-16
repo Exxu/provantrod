@@ -156,9 +156,6 @@ void module_io_run()
 //	float channel_THROTTLE_initial = 0.0f, throttle_moduler=0.0f;
 	int valid_sonar_measurements=0;
 	int n_valid_samples=0;
-	float height_acc=0;
-	int count=0;
-	int n_valid_samples=0;
 
 
 	pv_msg_io_actuation    actuation = {0,0.0f,0.0f,0.0f,0.0f};
@@ -223,8 +220,6 @@ void module_io_run()
 			sonar_raw= sonar_raw_real/100;
 
 		#ifdef LIMIT_SONAR_VAR
-#define SONAR_AVERAGE_WINDOW 20
-
 
 			// height obtained from integration the accelerometers
 //			height_acc = c_datapr_filter_estimate_height_acc(accRaw, rpy);
@@ -249,7 +244,7 @@ void module_io_run()
 				sonar_raw_filter=0;
 				n_valid_samples=0;
 			}
-
+		#endif
 
 
 
