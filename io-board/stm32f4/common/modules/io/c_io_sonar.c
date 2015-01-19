@@ -28,8 +28,9 @@
 #ifdef STM32F4_H407
   #define SONAR_USART     USART6
 #else
-  #define SONAR_USART     USART3
+  #define SONAR_USART     USART6
 #endif
+float c_io_last_sonar=0;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 /* Exported functions definitions --------------------------------------------*/
@@ -139,7 +140,7 @@ void c_io_sonar_init()
     #ifdef STM32F4_H407
       c_common_usart6_init(9600); //change this command if SONAR_USART change
     #else
-      c_common_usart3_init(9600); //change this command if SONAR_USART change
+      c_common_usart6_init(115200); //change this command if SONAR_USART change
     #endif
   #else
     adc_configure();
@@ -153,13 +154,26 @@ void c_io_sonar_init()
 
 float  c_io_sonar_read()
 {
+  char dist[3]={0,0,0};
   #if SERIAL_SONAR
-    char dist[3];
-    while(c_common_usart_read(SONAR_USART)!='R'){}
-    dist[0]=c_common_usart_read(SONAR_USART);
-    dist[1]=c_common_usart_read(SONAR_USART);
-    dist[2]=c_common_usart_read(SONAR_USART);
-    return (float)atoi(dist);
+    #ifdef MB1200
+      
+      while(c_common_usart_read(SONAR_USART)!='R'){}
+      dist[0]=c_common_usart_read(SONAR_USART);
+      dist[1]=c_common_usart_read(SONAR_USART);
+      dist[2]=c_common_usart_read(SONAR_USART);
+      return (float)atoi(dist);
+    #endif
+    #ifdef HCRS04
+      if(c_common_usart_available(SONAR_USART))
+      {
+        while(c_common_usart_read(SONAR_USART)!='R'){}
+        for(;dist[0]==0;)
+          dist[0]=c_common_usart_read(SONAR_USART);
+        c_io_last_sonar=(float)dist[0];
+      }
+      return c_io_last_sonar;
+    #endif
   #else
     return (float)adc_convert();
   #endif
