@@ -67,6 +67,7 @@
 
 #define LIMIT_SONAR_VAR
 #define SONAR_MAX_VAR		0.5
+#define SONAR_AVERAGE_WINDOW 20
 
 
 //Maximum value for the thrust when in manual height mode
