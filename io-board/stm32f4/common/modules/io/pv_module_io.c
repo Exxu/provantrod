@@ -151,7 +151,7 @@ void module_io_run()
 {
 	bool lock_increment_roll=false, lock_increment_pitch=false, lock_increment_yaw=false, enable_integration=false, lock_increment_z=false;
 	float accRaw[3]={0}, gyrRaw[3]={0}, magRaw[3]={0}, rpy[6] = {0}, attitude_yaw_initial=0.0f, last_valid_sonar_raw=0.35f, position_reference_initial=0.0f;
-	int channel_A=0, channel_B=0, channel_VR=0, iterations=0, channel_flight_mode=0, sample=0;
+	int channel_A=0, channel_B=0, channel_VR=0, iterations=1, channel_flight_mode=0, sample=0;
 	float channel_THROTTLE=0.0f, channel_ROLL=0.0f, channel_PITCH=0.0f, channel_YAW=0.0f, sonar_raw=0.0f, sonar_raw_real=0.0f, sonar_raw_filter=0.0f, sonar_corrected_debug=0.0f, sonar_corrected=0.0f, sonar_filtered=0.0f, dotZ=0.0f, dotZ_filtered=0.0f;
 //	float channel_THROTTLE_initial = 0.0f, throttle_moduler=0.0f;
 	int valid_sonar_measurements=0;
@@ -224,14 +224,15 @@ void module_io_run()
 			// height obtained from integration the accelerometers
 //			height_acc = c_datapr_filter_estimate_height_acc(accRaw, rpy);
 
-			if (sample<=SONAR_AVERAGE_WINDOW){
-				if ( ( (position_reference.z-SONAR_MAX_VAR)<sonar_raw && (position_reference.z+SONAR_MAX_VAR)>sonar_raw )){
+			//if (sample<=SONAR_AVERAGE_WINDOW){
+				if ( ( (position_reference.z-SONAR_MAX_VAR)<sonar_raw && (position_reference.z+SONAR_MAX_VAR)>sonar_raw ) || init){
 //					last_valid_sonar_raw = sonar_raw;
-					sonar_raw_filter=sonar_raw_filter+sonar_raw;
-					n_valid_samples++;
+					//sonar_raw_filter=sonar_raw_filter+sonar_raw;
+					//n_valid_samples++;
+					sonar_corrected = (sonar_raw)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
 				}
-				sample++;
-			}
+				//sample++;
+			/*}/*
 			else{
 				if (n_valid_samples <= 0)
 					sonar_corrected= last_valid_sonar_raw;
@@ -243,7 +244,9 @@ void module_io_run()
 				sample=0;
 				sonar_raw_filter=0;
 				n_valid_samples=0;
-			}
+			}*/
+			#else
+				sonar_corrected = sonar_raw*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);
 		#endif
 
 
@@ -479,16 +482,16 @@ void module_io_run()
 			if (init){
 				c_common_datapr_multwii_bicopter_identifier();
 	    		c_common_datapr_multwii_motor_pins();}
-//		    c_common_datapr_multwii_motor((int)iActuation.escLeftSpeed*100,(int)iActuation.escRightSpeed*100);
-			c_common_datapr_multwii_motor((int)(1),(int)(10));
+		    c_common_datapr_multwii_motor((int)iActuation.escLeftSpeed,(int)iActuation.escRightSpeed);
+			//c_common_datapr_multwii_motor((int)(1),(int)(10));
 			c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG*10, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG*10, rpy[PV_IMU_YAW  ]*RAD_TO_DEG*10 );
 //	    	c_common_datapr_multwii_raw_imu(accRaw,gyrRaw,magRaw);
-//	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
+	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
 //	    	c_common_datapr_multwii_servos((int)(altitude_sonar*100),(int)(position.dotZ*100));
 //	    	c_common_datapr_multwii_debug(channel_A, channel_B, channel_VR, channel_THROTTLE);
 //	    	c_common_datapr_multwii_debug((dotZ_filtered*1000),(iActuation.servoRight*RAD_TO_DEG*10),(sonar_filtered*100), 1);
 //	    	c_common_datapr_multwii_debug((int)((dotZ_filtered*1000)+100),(int)((iActuation.servoRight*RAD_TO_DEG*10)+100),(int)((sonar_filtered*100)+100),get_manual_height_control()+10);
-			c_common_datapr_multwii_debug((int)(sonar_raw_real),(int)(dotZ_filtered*100),(int)(sonar_filtered*100),(int)(sonar_corrected*100));
+			c_common_datapr_multwii_debug((int)(sonar_raw_real),(int)(sonar_filtered*100),(int)(attitude_reference.roll*RAD_TO_DEG*10),(int)(attitude_reference.pitch*RAD_TO_DEG*10));
 
 	    	c_common_datapr_multwii_sendstack(USART2);
 	    	#else  

@@ -32,6 +32,7 @@ void c_common_usart1_init(int baudrate);
 void c_common_usart2_init(int baudrate);
 void c_common_usart3_init(int baudrate);
 void c_common_usart6_init(int baudrate);
+void c_common_usart_flush(USART_TypeDef* USARTx);
 void c_common_usart_puts(USART_TypeDef* USARTx, volatile char *s);
 void c_common_usart_putchar(USART_TypeDef* USARTx, volatile char c);
 bool c_common_usart_available(USART_TypeDef* USARTx);
