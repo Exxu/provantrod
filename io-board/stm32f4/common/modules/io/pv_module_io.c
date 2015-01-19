@@ -220,32 +220,6 @@ void module_io_run()
 			sonar_raw= sonar_raw_real/100;
 
 		#ifdef LIMIT_SONAR_VAR
-<<<<<<< HEAD
-
-			// height obtained from integration the accelerometers
-//			height_acc = c_datapr_filter_estimate_height_acc(accRaw, rpy);
-
-			if (sample<=SONAR_AVERAGE_WINDOW){
-				if ( ( (position_reference.z-SONAR_MAX_VAR)<sonar_raw && (position_reference.z+SONAR_MAX_VAR)>sonar_raw )){
-//					last_valid_sonar_raw = sonar_raw;
-					sonar_raw_filter=sonar_raw_filter+sonar_raw;
-					n_valid_samples++;
-				}
-				sample++;
-			}
-			else{
-				if (n_valid_samples <= 0)
-					sonar_corrected= last_valid_sonar_raw;
-				else{
-					sonar_corrected_debug= sonar_raw_filter/n_valid_samples;
-					sonar_corrected = (sonar_corrected_debug)*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);//the altitude must be in meters
-				}
-
-				sample=0;
-				sonar_raw_filter=0;
-				n_valid_samples=0;
-			}
-=======
 
 			// height obtained from integration the accelerometers
 //			height_acc = c_datapr_filter_estimate_height_acc(accRaw, rpy);
@@ -273,7 +247,7 @@ void module_io_run()
 			}*/
 			#else
 				sonar_corrected = sonar_raw*cos(rpy[PV_IMU_ROLL])*cos(rpy[PV_IMU_PITCH]);
->>>>>>> rodrigodonadel-teste
+
 		#endif
 
 
