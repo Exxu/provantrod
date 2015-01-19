@@ -99,8 +99,10 @@
 
  // Reference limits for the radio controller
 #ifdef ATTITUDE_REF_CONTINOUS
+	#define REF_ROLL_BIAS		0 //radians
 	#define REF_ROLL_MAX		0.2 //radians
 	#define REF_PITCH_MAX		0.2 //radians
+	#define REF_PITCH_BIAS		0.0611 //radians
 	#define REF_YAW_MAX			0.0 //radians
 	#define REF_Z_MAX			0.5 //meters
 	#define REF_Z_INCREMENT     0.05 //meters

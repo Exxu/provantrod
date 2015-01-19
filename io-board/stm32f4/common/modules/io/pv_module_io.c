@@ -159,7 +159,7 @@ void module_io_run()
 
 
 	pv_msg_io_actuation    actuation = {0,0.0f,0.0f,0.0f,0.0f};
-	pv_msg_datapr_attitude attitude  = {0}, attitude_reference = {2*DEG_TO_RAD,0.0f,0.0f,0.0f,0.0f,0.0f};//roll=0.03491; pitch -0.0791f
+	pv_msg_datapr_attitude attitude  = {0}, attitude_reference = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};//roll=0.03491; pitch -0.0791f
 	pv_msg_datapr_position position  = {0}, position_reference = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};
 
 	while(1)
@@ -384,8 +384,8 @@ void module_io_run()
 			lock_increment_yaw = false;
 
 #elif defined ATTITUDE_REF_CONTINOUS
-		attitude_reference.roll     = REF_ROLL_MAX*channel_ROLL/100;
-		attitude_reference.pitch    = REF_PITCH_MAX*channel_PITCH/100;
+		attitude_reference.roll     = (REF_ROLL_MAX*channel_ROLL/100)+REF_ROLL_BIAS;
+		attitude_reference.pitch    = REF_PITCH_MAX*channel_PITCH/100+REF_PITCH_BIAS;
 		attitude_reference.yaw      = attitude_yaw_initial;// + REF_YAW_MAX*channel_YAW/100;
 
 //		if (!get_manual_height_control()){
