@@ -413,7 +413,7 @@ void module_io_run()
 		#if 1
 			if (!init){
 				#ifdef LQR_ATTITUDE_HEIGHT_CONTROL
-					iActuation = c_rc_LQR_AH_controller(attitude,attitude_reference,position,position_reference);
+					iActuation = c_rc_LQR_AH_controller(attitude,attitude_reference,position,position_reference,get_manual_height_control());
 				#elif defined BACKSTEPPING_ATTITUDE_HEIGHT_CONTROL
 					iActuation = c_rc_BS_AH_controller(attitude,attitude_reference,position,position_reference,channel_THROTTLE/100,get_manual_height_control(),enable_integration);
 				#endif

@@ -45,6 +45,9 @@
 #define PV_IMU_Y           1
 #define PV_IMU_Z           2
 
+#define ACC_FILTER_2OD_5HZ
+#define MAG_FILTER_2OD_5HZ
+
 /* Offset Giroscopio*/
 //#define OFFSET_GYRO_X		   	-0.051979079497908
 //#define OFFSET_GYRO_Y		   	-0.012014143530644

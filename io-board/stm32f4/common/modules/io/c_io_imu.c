@@ -72,7 +72,8 @@ const float mag_ellipsoid_transform[3][3] = {{0.792428, -0.00418974, 0.00504922}
  double mag_calibration_matrix[3][3] = {{M11, M12, M13},{M21, M22, M23},{M31, M32, M33} };
  //bias[3] is the bias
  double mag_bias[3] = {Bx,By,Bz};
-
+ float acc_filtered[3]={0}, acc_filtered_k_minus_1[3]={0}, acc_filtered_k_minus_2[3]={0}, acc_raw_k_minus_1[3]={0}, acc_raw_k_minus_2[3]={0};
+ float mag_filtered[3]={0}, mag_filtered_k_minus_1[3]={0}, mag_filtered_k_minus_2[3]={0}, mag_raw_k_minus_1[3]={0}, mag_raw_k_minus_2[3]={0};
 /* Private function prototypes -----------------------------------------------*/
 
 //void c_io_imu_Euler2Quaternion(float * rpy, float * q);
@@ -124,10 +125,10 @@ void c_io_imu_init(I2C_TypeDef* I2Cx)
 	c_common_i2c_readBytes(I2Cx_imu, GYRO_ADDR, 0x00, 1, &GYRO_ID);
 //	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0x16, 24); //24 = 0b0001 1000
 	// Low Pass Filter
-//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x1E); //fc=5Hz
-	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x1B); //fc=42Hz
+	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x1E); //fc=5Hz
+//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x1B); //fc=42Hz
 //	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x1A); //fc=98Hz
-	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 25); //fc=188Hz - estava usando este
+//	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 25); //fc=188Hz - estava usando este
 //	c_common_i2c_writeByte(I2Cx_imu, GYRO_ADDR, 0X16, 0x03); //fc=256Hz
 
 	// Output data frequency (must change if the value in register 0x16 changes to fc=256Hz)
@@ -213,9 +214,20 @@ float mag_tmp[3]={0};
     accRaw[0] = (int16_t)(imuBuffer[0] | (imuBuffer[1] << 8))*accScale;
     accRaw[1] = (int16_t)(imuBuffer[2] | (imuBuffer[3] << 8))*accScale;
     accRaw[2] = (int16_t)(imuBuffer[4] | (imuBuffer[5] << 8))*accScale;
-//	accRaw[1] = ((((int16_t) imuBuffer[3]) << 8) | imuBuffer[2])*accScale; // X axis (internal sensor y axis)
-//	accRaw[0] = ((((int16_t) imuBuffer[1]) << 8) | imuBuffer[0])*accScale; // Y axis (internal sensor x axis)
-//	accRaw[2] = ((((int16_t) imuBuffer[5]) << 8) | imuBuffer[4])*accScale; // Z axis (internal sensor z axis)
+
+    //2nd order filter with fc=5Hz
+	#ifdef ACC_FILTER_2OD_5HZ
+		float k1_2o_5Hz=-1.778631777824585, k2_2o_5Hz=0.800802646665708, k3_2o_5Hz=0.005542717210281, k4_2o_5Hz=0.011085434420561, k5_2o_5Hz=0.005542717210281;
+
+		for (int i=0; i<3; i++){
+			acc_filtered[i] = -k1_2o_5Hz*acc_filtered_k_minus_1[i] - k2_2o_5Hz*acc_filtered_k_minus_2[i] + k3_2o_5Hz*accRaw[i] + k4_2o_5Hz*acc_raw_k_minus_1[i] + k5_2o_5Hz*acc_raw_k_minus_2[i];
+			// Filter memory
+			acc_raw_k_minus_2[i] = acc_raw_k_minus_1[i];
+			acc_raw_k_minus_1[i] = accRaw[i];
+			acc_filtered_k_minus_2[i] = acc_filtered_k_minus_1[i];
+			acc_filtered_k_minus_1[i] = acc_filtered[i];
+		}
+	#endif
 
     // Read x, y, z from gyro, pack the data
 
@@ -256,6 +268,20 @@ float mag_tmp[3]={0};
     magRaw[1] =  (int16_t)((imuBuffer[5] | (imuBuffer[4] << 8)));// Y
     magRaw[2] =  (int16_t)((imuBuffer[3] | (imuBuffer[2] << 8)));// Z
     
+    //2nd order filter with fc=5Hz
+	#ifdef MAG_FILTER_2OD_5HZ
+//		float k1_2o_5Hz=-1.778631777824585, k2_2o_5Hz=0.800802646665708, k3_2o_5Hz=0.005542717210281, k4_2o_5Hz=0.011085434420561, k5_2o_5Hz=0.005542717210281;
+
+		for (int i=0; i<3; i++){
+			mag_filtered[i] = -k1_2o_5Hz*mag_filtered_k_minus_1[i] - k2_2o_5Hz*mag_filtered_k_minus_2[i] + k3_2o_5Hz*magRaw[i] + k4_2o_5Hz*mag_raw_k_minus_1[i] + k5_2o_5Hz*mag_raw_k_minus_2[i];
+			// Filter memory
+			mag_raw_k_minus_2[i] = mag_raw_k_minus_1[i];
+			mag_raw_k_minus_1[i] = magRaw[i];
+			mag_filtered_k_minus_2[i] = mag_filtered_k_minus_1[i];
+			mag_filtered_k_minus_1[i] = mag_filtered[i];
+		}
+	#endif
+
     /** Como dito no link:  http://www.multiwii.com/forum/viewtopic.php?f=8&t=1387&p=10658
     * temosque encontrar os zeros do mag
 
@@ -270,28 +296,42 @@ float mag_tmp[3]={0};
 
   #ifdef CALIBRATE
     // Compensate accelerometer error
-    accRaw[0] = (accRaw[0] - ACCEL_X_OFFSET) * ACCEL_X_SCALE;
-    accRaw[1] = (accRaw[1] - ACCEL_Y_OFFSET) * ACCEL_Y_SCALE;
-    accRaw[2] = (accRaw[2] - ACCEL_Z_OFFSET) * ACCEL_Z_SCALE;
+	#ifdef ACC_FILTER_2OD_5HZ
+    	accRaw[0] = (acc_filtered[0] - ACCEL_X_OFFSET) * ACCEL_X_SCALE;
+    	accRaw[1] = (acc_filtered[1] - ACCEL_Y_OFFSET) * ACCEL_Y_SCALE;
+    	accRaw[2] = (acc_filtered[2] - ACCEL_Z_OFFSET) * ACCEL_Z_SCALE;
+	#else
+		accRaw[0] = (accRaw[0] - ACCEL_X_OFFSET) * ACCEL_X_SCALE;
+		accRaw[1] = (accRaw[1] - ACCEL_Y_OFFSET) * ACCEL_Y_SCALE;
+		accRaw[2] = (accRaw[2] - ACCEL_Z_OFFSET) * ACCEL_Z_SCALE;
+	#endif
     // Compensate magnetometer error
-    #ifdef CALIBRATION__MAGN_USE_EXTENDED
-		for (int i = 0; i < 3; i++)
-			mag_tmp[i] = magRaw[i] - mag_ellipsoid_center[i];
-//		Matrix_Vector_Multiply(magn_ellipsoid_transform, mag_tmp, magRaw);
-		magRaw[0] = mag_ellipsoid_transform[0][0]*mag_tmp[0] + mag_ellipsoid_transform[0][1]*mag_tmp[1] + mag_ellipsoid_transform[0][2]*mag_tmp[2];
-		magRaw[1] = mag_ellipsoid_transform[1][0]*mag_tmp[0] + mag_ellipsoid_transform[1][1]*mag_tmp[1] + mag_ellipsoid_transform[1][2]*mag_tmp[2];
-		magRaw[2] = mag_ellipsoid_transform[2][0]*mag_tmp[0] + mag_ellipsoid_transform[2][1]*mag_tmp[1] + mag_ellipsoid_transform[2][2]*mag_tmp[2];
+    #ifdef MAG_FILTER_2OD_5HZ
+		 for (int i=0; i<3; i++)
+			 magRaw[i] = mag_filtered[i] - mag_bias[i];
+
+		 float result[3] = {0, 0, 0};
+			 for (int i=0; i<3; i++)
+				 for (int j=0; j<3; ++j)
+					 result[i] += mag_calibration_matrix[i][j] * magRaw[j];
+
+		 //calibrated values
+		 for (int i=0; i<3; i++) magRaw[i] = result[i];
+
     #else
-	 for (int i=0; i<3; ++i) magRaw[i] = magRaw[i] - mag_bias[i];
+		 for (int i=0; i<3; ++i)
+			 magRaw[i] = magRaw[i] - mag_bias[i];
 
-	 float result[3] = {0, 0, 0};
-	 	 for (int i=0; i<3; ++i)
-	 		 for (int j=0; j<3; ++j)
-	 			 result[i] += mag_calibration_matrix[i][j] * magRaw[j];
+		 float result[3] = {0, 0, 0};
+			 for (int i=0; i<3; ++i)
+				 for (int j=0; j<3; ++j)
+					 result[i] += mag_calibration_matrix[i][j] * magRaw[j];
 
-	 //calibrated values
-	 for (int i=0; i<3; ++i) magRaw[i] = result[i];
+		 //calibrated values
+		 for (int i=0; i<3; ++i) magRaw[i] = result[i];
+
     #endif
+
     // Compensate gyroscope error
     gyrRaw[0] -= OFFSET_GYRO_X;
     gyrRaw[1] -= OFFSET_GYRO_Y;

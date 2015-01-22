@@ -11,8 +11,8 @@
 /* Exported macros ------------------------------------------------------------*/
 
 // Choose the controller
-//#define LQR_ATTITUDE_HEIGHT_CONTROL
-#define BACKSTEPPING_ATTITUDE_HEIGHT_CONTROL //Based on Chowdhurry's article
+#define LQR_ATTITUDE_HEIGHT_CONTROL
+//#define BACKSTEPPING_ATTITUDE_HEIGHT_CONTROL //Based on Chowdhurry's article
 //#define LQR_PATHTRACK_CONTROL  //To be implemented
 //#define HINF_PATHTRACK_CONTROL //To be implemented
 //#define HMIX_PATHTRACK_CONTROL //To be implemented
@@ -74,6 +74,8 @@
 #define THRUST_ROTOR_MAX			14.2f   // Newtons. It is the maximum thrust that can be appliesd to a rotor
 #define THRUST_FLIGHT_THRESHOLD		(M*G-14.0f)	// Newtons. The thrust needed for the aircraft to almost take flight
 #define THRUST_MAX_MANUAL			(2.0f*THRUST_ROTOR_MAX-THRUST_FLIGHT_THRESHOLD)	// Newtons. It is the total thrust applied by the brushless motors combined
+
+//#define ENABLE_TAKEOFF_PROCEDURE
 
  //keeping here to keep it practical, move it to sensors after test
 #define ESC_MINIMUM_VELOCITY	10//esc set point value (0-255)
