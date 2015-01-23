@@ -108,7 +108,7 @@ arm_matrix_instance_f32 LQR_AH_Ki;
 
 
 /* Private function prototypes -----------------------------------------------*/
-arm_matrix_instance_f32 c_rc_LQR_AH_errorStateVector(pv_msg_datapr_attitude attitude, pv_msg_datapr_position position, pv_msg_datapr_position position_reference);
+arm_matrix_instance_f32 c_rc_LQR_AH_errorStateVector(pv_msg_datapr_attitude attitude, pv_msg_datapr_attitude attitude_reference, pv_msg_datapr_position position, pv_msg_datapr_position position_reference);
 arm_matrix_instance_f32 c_rc_LQR_AH_PD(arm_matrix_instance_f32 error_state_vector);
 arm_matrix_instance_f32 c_rc_LQR_AH_I(c_rc_stability_error error);
 void c_rc_LQR_AH_integrate_error(c_rc_stability_error current_error, float sample_time);
@@ -145,8 +145,8 @@ void c_rc_LQR_AH_integrate_error(c_rc_stability_error error, float sample_time){
 
 
 
-arm_matrix_instance_f32 c_rc_LQR_AH_errorStateVector(pv_msg_datapr_attitude attitude, pv_msg_datapr_position position,
-													pv_msg_datapr_position position_reference){
+arm_matrix_instance_f32 c_rc_LQR_AH_errorStateVector(pv_msg_datapr_attitude attitude, pv_msg_datapr_attitude attitude_reference,
+														pv_msg_datapr_position position, pv_msg_datapr_position position_reference){
 
 	arm_matrix_instance_f32 error_state_vector, state_vector, equilibrium_point;
 
@@ -163,6 +163,8 @@ arm_matrix_instance_f32 c_rc_LQR_AH_errorStateVector(pv_msg_datapr_attitude atti
 	//Updates the height equilibrium point according to the reference
 	equilibrium_point_f32[STATE_Z]= position_reference.z;
 	equilibrium_point_f32[STATE_DZ]= position_reference.dotZ;
+	equilibrium_point_f32[STATE_ROLL]= attitude_reference.roll;
+	equilibrium_point_f32[STATE_PITCH]= attitude_reference.pitch;
 
 	//Initializes the matrices
 	arm_mat_init_f32(&equilibrium_point, 8, 1, (float32_t *)equilibrium_point_f32);
@@ -250,6 +252,7 @@ pv_msg_io_actuation c_rc_LQR_AH_controller(pv_msg_datapr_attitude attitude,
 				  pv_msg_datapr_attitude attitude_reference,
 				  pv_msg_datapr_position position,
 				  pv_msg_datapr_position position_reference,
+				  float throttle_control,
 				  bool manual_height_control){
 
 	pv_msg_io_actuation actuation_signals;
@@ -275,7 +278,13 @@ pv_msg_io_actuation c_rc_LQR_AH_controller(pv_msg_datapr_attitude attitude,
 	#endif
 
 	//e(t)=x(t)- equilibrium_point
-	error_state_vector = c_rc_LQR_AH_errorStateVector(attitude, position, position_reference);
+	#ifdef ENABLE_RC_HEIGHT_REFERENCE
+		position_reference.z=throttle_control*HEIGHT_REFERENCE_MAX;
+	#endif
+
+
+	error_state_vector = c_rc_LQR_AH_errorStateVector(attitude, attitude_reference, position, position_reference);
+
 	//u_p+u_d=-Ke*e(t)
 	PD_control = c_rc_LQR_AH_PD(error_state_vector);
 	//u_i=-Ki*integral(e(t))

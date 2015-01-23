@@ -332,8 +332,13 @@ pv_msg_io_actuation c_rc_BS_AH_controller(pv_msg_datapr_attitude attitude,
 
 	if (manual_height_control)
 		Fzb = c_rc_BS_AH_Fzb_RC(throttle_control);
-	else
-		Fzb = c_rc_BS_AH_altitude_controller_step(position.z, position_reference.z, position.dotZ, position_reference.dotZ, attitude);
+	else{
+		#ifdef ENABLE_RC_HEIGHT_REFERENCE
+			Fzb = c_rc_BS_AH_altitude_controller_step(position.z, throttle_control*HEIGHT_REFERENCE_MAX, position.dotZ, position_reference.dotZ, attitude);
+		#else
+			Fzb = c_rc_BS_AH_altitude_controller_step(position.z, position_reference.z, position.dotZ, position_reference.dotZ, attitude);
+		#endif
+		}
 
 	actuation_signals = c_rc_BS_AH_actuators_signals_step(tau, Fzb);
 

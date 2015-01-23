@@ -75,6 +75,8 @@
 #define THRUST_FLIGHT_THRESHOLD		(M*G-14.0f)	// Newtons. The thrust needed for the aircraft to almost take flight
 #define THRUST_MAX_MANUAL			(2.0f*THRUST_ROTOR_MAX-THRUST_FLIGHT_THRESHOLD)	// Newtons. It is the total thrust applied by the brushless motors combined
 
+#define ENABLE_RC_HEIGHT_REFERENCE
+#define HEIGHT_REFERENCE_MAX	1.5 //meters
 //#define ENABLE_TAKEOFF_PROCEDURE
 
  //keeping here to keep it practical, move it to sensors after test
@@ -101,10 +103,12 @@
 
  // Reference limits for the radio controller
 #ifdef ATTITUDE_REF_CONTINOUS
-	#define REF_ROLL_BIAS		0.0 //radians
+//	#define REF_ROLL_BIAS		0.0 //radians
+	#define REF_ROLL_BIAS		-0.0087 //radians
 	#define REF_ROLL_MAX		0.2 //radians
 	#define REF_PITCH_MAX		0.2 //radians
-	#define REF_PITCH_BIAS		0.148 //radians
+//	#define REF_PITCH_BIAS		0.148 //radians //funciona no chowdhurry
+	#define REF_PITCH_BIAS		-0.0576
 	#define REF_YAW_MAX			0.0 //radians
 	#define REF_Z_MAX			0.5 //meters
 	#define REF_Z_INCREMENT     0.05 //meters
