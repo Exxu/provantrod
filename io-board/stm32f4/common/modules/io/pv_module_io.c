@@ -486,14 +486,15 @@ void module_io_run()
 			c_common_datapr_multwii_motor((int)iActuation.escLeftSpeed,(int)iActuation.escRightSpeed);
 //			c_common_datapr_multwii_motor((int)(1),(int)(10));
 			c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG*10, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG*10, rpy[PV_IMU_YAW  ]*RAD_TO_DEG*10 );
-//	    	c_common_datapr_multwii_raw_imu(accRaw,gyrRaw,magRaw);
+//	    	c_common_datapr_multwii_raw_imu(position_reference.z,attitude_reference.yaw,0);
 	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
+	    	c_common_datapr_multwii_altitude(sonar_raw_real,sonar_filtered*100);
 //	    	c_common_datapr_multwii_servos((int)(altitude_sonar*100),(int)(position.dotZ*100));
 //	    	c_common_datapr_multwii_debug(channel_A, channel_B, channel_VR, channel_THROTTLE);
 //	    	c_common_datapr_multwii_debug((dotZ_filtered*1000),(iActuation.servoRight*RAD_TO_DEG*10),(sonar_filtered*100), 1);
 //	    	c_common_datapr_multwii_debug((int)((dotZ_filtered*1000)+100),(int)((iActuation.servoRight*RAD_TO_DEG*10)+100),(int)((sonar_filtered*100)+100),get_manual_height_control()+10);
 
-			c_common_datapr_multwii_debug((int)(sonar_raw_real),(int)(sonar_filtered*100),(int)(attitude_reference.roll*RAD_TO_DEG*10),(int)(attitude_reference.pitch*RAD_TO_DEG*10));
+			c_common_datapr_multwii_debug(position_reference.z,attitude_reference.yaw,(int)(attitude_reference.roll*RAD_TO_DEG*10),(int)(attitude_reference.pitch*RAD_TO_DEG*10));
 
 	    	c_common_datapr_multwii_sendstack(USART2);
 	    	#else  
