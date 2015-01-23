@@ -34,7 +34,9 @@ void c_rc_LQR_control_init();
 pv_msg_io_actuation c_rc_LQR_AH_controller(pv_msg_datapr_attitude attitude,
 				  pv_msg_datapr_attitude attitude_reference,
 				  pv_msg_datapr_position position,
-				  pv_msg_datapr_position position_reference);
+				  pv_msg_datapr_position position_reference,
+				  float throttle_control,
+				  bool manual_height_control);
 
 #ifdef __cplusplus
 }
