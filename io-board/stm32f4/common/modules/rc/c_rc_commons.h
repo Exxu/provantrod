@@ -33,7 +33,7 @@
 
 #if 1
 	 #define KPPHI    	80.0f
-	 #define KVPHI    	5.0f
+	 #define KVPHI    	8.0f
 	 #define KIPHI	 	6.0f
 	 #define KPTHETA  	40.0f
 	 #define KVTHETA  	5.0f

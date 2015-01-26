@@ -483,11 +483,11 @@ void module_io_run()
 			if (init){
 				c_common_datapr_multwii_bicopter_identifier();
 	    		c_common_datapr_multwii_motor_pins();}
-			c_common_datapr_multwii_motor((int)iActuation.escLeftSpeed,(int)iActuation.escRightSpeed);
+//			c_common_datapr_multwii_motor((int)iActuation.escLeftSpeed,(int)iActuation.escRightSpeed);
 //			c_common_datapr_multwii_motor((int)(1),(int)(10));
 			c_common_datapr_multwii_attitude(rpy[PV_IMU_ROLL  ]*RAD_TO_DEG*10, rpy[PV_IMU_PITCH  ]*RAD_TO_DEG*10, rpy[PV_IMU_YAW  ]*RAD_TO_DEG*10 );
 //	    	c_common_datapr_multwii_raw_imu(position_reference.z,attitude_reference.yaw,0);
-	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
+//	    	c_common_datapr_multwii_servos((iActuation.servoLeft*RAD_TO_DEG),(iActuation.servoRight*RAD_TO_DEG));
 	    	c_common_datapr_multwii_altitude(sonar_raw_real,sonar_filtered*100);
 //	    	c_common_datapr_multwii_servos((int)(altitude_sonar*100),(int)(position.dotZ*100));
 //	    	c_common_datapr_multwii_debug(channel_A, channel_B, channel_VR, channel_THROTTLE);
