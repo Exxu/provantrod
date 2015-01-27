@@ -81,7 +81,8 @@
 
  //keeping here to keep it practical, move it to sensors after test
 #define ESC_MINIMUM_VELOCITY	10//esc set point value (0-255)
-#define ATTITUDE_MINIMUM_STEP	0.01// Radians. Minimum change in angle that is passed to the controller
+//#define ATTITUDE_MINIMUM_STEP	0.01// Radians. Minimum change in angle that is passed to the controller
+#define ATTITUDE_MINIMUM_STEP	0.0035// Radians. Minimum change in angle that is passed to the controller
 
  // Fixed Sample Time
  #define CONTROL_SAMPLE_TIME 	0.005f

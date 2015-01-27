@@ -349,8 +349,10 @@ void module_io_run()
 		/// DADOS OUT
 		if (abs2(rpy[PV_IMU_ROLL  ]-attitude.roll)>ATTITUDE_MINIMUM_STEP)
 			attitude.roll     = rpy[PV_IMU_ROLL  ];
-		if (abs2(rpy[PV_IMU_PITCH ]-attitude.pitch)>ATTITUDE_MINIMUM_STEP) attitude.pitch    = rpy[PV_IMU_PITCH ];
-		if (abs2(rpy[PV_IMU_YAW   ]-attitude.yaw)>ATTITUDE_MINIMUM_STEP)  attitude.yaw      = rpy[PV_IMU_YAW   ];
+		if (abs2(rpy[PV_IMU_PITCH ]-attitude.pitch)>ATTITUDE_MINIMUM_STEP)
+			attitude.pitch    = rpy[PV_IMU_PITCH ];
+		if (abs2(rpy[PV_IMU_YAW   ]-attitude.yaw)>ATTITUDE_MINIMUM_STEP)
+			attitude.yaw      = rpy[PV_IMU_YAW   ];
 		attitude.dotRoll  = rpy[PV_IMU_DROLL ];
 		attitude.dotPitch = rpy[PV_IMU_DPITCH];
 		attitude.dotYaw   = rpy[PV_IMU_DYAW  ];
