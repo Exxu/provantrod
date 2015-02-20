@@ -37,7 +37,7 @@
 #define sampleFreq	200.0f			// sample frequency in Hz
 //#define twoKpDef	(2.0f * 10.0f)	// 2 * proportional gain
 //#define twoKiDef	(2.0f * 0.1f)	// 2 * integral gain
-#define twoKpDef	(2.0f * 4.0f)	// 2 * proportional gain
+#define twoKpDef	(2.0f * 7.0f)	// 2 * proportional gain
 #define twoKiDef	(2.0f * 0.0f)	// 2 * integral gain
 //#define twoKpDef	(2.0f * 1.0f)	// 2 * proportional gain
 //#define twoKiDef	(2.0f * 0.5f)	// 2 * integral gain
@@ -74,7 +74,7 @@ float invSqrt(float x);
  */
 
 void c_datapr_MahonyAHRSupdate(float * q, float gx, float gy, float gz, float ax, float ay, float az,
-								float mx, float my, float mz) {
+								float mx, float my, float mz, long sample_time_gyro_us) {
 	float recipNorm;
     float q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;  
 	float hx, hy, bx, bz;
@@ -82,6 +82,9 @@ void c_datapr_MahonyAHRSupdate(float * q, float gx, float gy, float gz, float ax
 	float halfex, halfey, halfez;
 	float qa, qb, qc;
 	float q0, q1, q2, q3;
+	float sample_time_gyro;
+
+	sample_time_gyro = (float)(sample_time_gyro_us)/1000000;
 
 	// Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
 	if((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
@@ -145,9 +148,9 @@ void c_datapr_MahonyAHRSupdate(float * q, float gx, float gy, float gz, float ax
 
 		// Compute and apply integral feedback if enabled
 		if(twoKi > 0.0f) {
-			integralFBx += twoKi * halfex * (1.0f / sampleFreq);	// integral error scaled by Ki
-			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
-			integralFBz += twoKi * halfez * (1.0f / sampleFreq);
+			integralFBx += twoKi * halfex * sample_time_gyro;	// integral error scaled by Ki
+			integralFBy += twoKi * halfey * sample_time_gyro;
+			integralFBz += twoKi * halfez * sample_time_gyro;
 			gx += integralFBx;	// apply integral feedback
 			gy += integralFBy;
 			gz += integralFBz;
@@ -170,9 +173,12 @@ void c_datapr_MahonyAHRSupdate(float * q, float gx, float gy, float gz, float ax
 	}
 	
 	// Integrate rate of change of quaternion
-	gx *= (0.5f * (1.0f / sampleFreq));		// pre-multiply common factors
-	gy *= (0.5f * (1.0f / sampleFreq));
-	gz *= (0.5f * (1.0f / sampleFreq));
+//	gx *= (0.5f * (1.0f / sampleFreq));		// pre-multiply common factors
+//	gy *= (0.5f * (1.0f / sampleFreq));
+//	gz *= (0.5f * (1.0f / sampleFreq));
+	gx *= (0.5f * sample_time_gyro);		// pre-multiply common factors
+	gy *= (0.5f * sample_time_gyro);
+	gz *= (0.5f * sample_time_gyro);
 	qa = q0;
 	qb = q1;
 	qc = q2;

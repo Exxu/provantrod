@@ -81,8 +81,8 @@
 
  //keeping here to keep it practical, move it to sensors after test
 #define ESC_MINIMUM_VELOCITY	10//esc set point value (0-255)
-//#define ATTITUDE_MINIMUM_STEP	0.01// Radians. Minimum change in angle that is passed to the controller
-#define ATTITUDE_MINIMUM_STEP	0.0035// Radians. Minimum change in angle that is passed to the controller
+#define ATTITUDE_MINIMUM_STEP	0.01// Radians. Minimum change in angle that is passed to the controller
+//#define ATTITUDE_MINIMUM_STEP	0.0035f// Radians. Minimum change in angle that is passed to the controller
 
  // Fixed Sample Time
  #define CONTROL_SAMPLE_TIME 	0.005f
@@ -105,11 +105,13 @@
  // Reference limits for the radio controller
 #ifdef ATTITUDE_REF_CONTINOUS
 //	#define REF_ROLL_BIAS		0.0 //radians
+//	#define REF_ROLL_BIAS		-0.0087 //radians
 	#define REF_ROLL_BIAS		-0.0087 //radians
 	#define REF_ROLL_MAX		0.2 //radians
 	#define REF_PITCH_MAX		0.2 //radians
 //	#define REF_PITCH_BIAS		0.148 //radians //funciona no chowdhurry
-	#define REF_PITCH_BIAS		-0.0576
+//	#define REF_PITCH_BIAS		-0.0576
+	#define REF_PITCH_BIAS		-0.1169
 	#define REF_YAW_MAX			0.0 //radians
 	#define REF_Z_MAX			0.5 //meters
 	#define REF_Z_INCREMENT     0.05 //meters

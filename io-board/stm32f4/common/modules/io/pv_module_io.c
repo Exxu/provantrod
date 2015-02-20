@@ -156,7 +156,7 @@ void module_io_run()
 //	float channel_THROTTLE_initial = 0.0f, throttle_moduler=0.0f;
 	int valid_sonar_measurements=0;
 	int n_valid_samples=0;
-
+	long sample_time_gyro_us[1] ={0};
 
 	pv_msg_io_actuation    actuation = {0,0.0f,0.0f,0.0f,0.0f};
 	pv_msg_datapr_attitude attitude  = {0}, attitude_reference = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f};//roll=0.03491; pitch -0.0791f
@@ -195,9 +195,9 @@ void module_io_run()
 
 		/// IMU DATA
 		#if 1
-		 	c_io_imu_getRaw(accRaw, gyrRaw, magRaw);
+		 	c_io_imu_getRaw(accRaw, gyrRaw, magRaw, sample_time_gyro_us);
 
-		 	c_datapr_MahonyAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2]);
+		 	c_datapr_MahonyAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],magRaw[0],magRaw[1],magRaw[2], sample_time_gyro_us[0]);
 //		 	c_datapr_MahonyAHRSupdate(attitude_quaternion, gyrRaw[0],gyrRaw[1],gyrRaw[2],accRaw[0],accRaw[1],accRaw[2],0,0,0);
 		 	c_io_imu_Quaternion2Euler(attitude_quaternion, rpy);
 			c_io_imu_EulerMatrix(rpy,gyrRaw);
@@ -496,7 +496,7 @@ void module_io_run()
 //	    	c_common_datapr_multwii_debug((dotZ_filtered*1000),(iActuation.servoRight*RAD_TO_DEG*10),(sonar_filtered*100), 1);
 //	    	c_common_datapr_multwii_debug((int)((dotZ_filtered*1000)+100),(int)((iActuation.servoRight*RAD_TO_DEG*10)+100),(int)((sonar_filtered*100)+100),get_manual_height_control()+10);
 
-			c_common_datapr_multwii_debug(position_reference.z,attitude_reference.yaw,(int)(attitude_reference.roll*RAD_TO_DEG*10),(int)(attitude_reference.pitch*RAD_TO_DEG*10));
+			c_common_datapr_multwii_debug((int)(position_reference.z*10),attitude_reference.yaw,(int)(attitude_reference.roll*RAD_TO_DEG*10),(int)(attitude_reference.pitch*RAD_TO_DEG*10));
 
 	    	c_common_datapr_multwii_sendstack(USART2);
 	    	#else  

@@ -27,7 +27,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define	UINT32_MAX	4294967295
 /* Private macro -------------------------------------------------------------*/
 #define CORE_SysTickEn()    (*((u32*)0xE0001000)) = 0x40000001 /** Inicia SysTick - não usar com FreeRTOS rodando! */
 #define CORE_SysTickDis()   (*((u32*)0xE0001000)) = 0x40000000 /** Pára SysTick - não usar com FreeRTOS rodando! */
