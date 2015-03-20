@@ -33,6 +33,9 @@
 #define RAD_TO_DEG  57.2957795131f
 #define DEG_TO_RAD  0.017453292519943295769236907684886f
 
+//#define UINT32_MAX  ((uint32_t)-1)
+//#define UINT32_MAX  (0xffffffff)
+
 #ifndef M_PI
 #define M_PI 3.14159265359
 #endif

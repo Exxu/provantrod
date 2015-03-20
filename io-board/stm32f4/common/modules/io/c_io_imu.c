@@ -170,6 +170,22 @@ void c_io_imu_init(I2C_TypeDef* I2Cx)
 #endif
 }
 
+long t1=0;
+long c_io_imu_sample_time_us(){
+	long t2, sample_time;
+
+	t2 = c_common_utils_micros();
+	if (t1==0)
+		sample_time = 0;
+	else if (t2 < t1)
+  		sample_time = t2-t1+UINT32_MAX/168;
+  	else
+  		sample_time = t2-t1;
+	t1=t2;
+
+	return sample_time;
+}
+
 /** \brief Obtem as leituras raw do acelerômetro, giro e magnetômetro.
  *
  * O output de cada um dos sensores é escrito nos buffers passados para a função. Os buffers passados
@@ -183,7 +199,7 @@ void c_io_imu_init(I2C_TypeDef* I2Cx)
  * @param magRaw Buffer onde serão escritos os dados do magnetômetro.
  * @param sample_time Periodo de amostragem da IMU. Tempo entre a última aquisicão e a atual.
  */
-void c_io_imu_getRaw(float  * accRaw, float * gyrRaw, float * magRaw) {
+void c_io_imu_getRaw(float  * accRaw, float * gyrRaw, float * magRaw, long * sample_time_gyro_us) {
 
 //#ifdef CALIBRATION__MAGN_USE_EXTENDED
 //	float32_t mag_tmp_f32[3]={0}; // used as intermediate variable for matrices operations
@@ -196,6 +212,7 @@ void c_io_imu_getRaw(float  * accRaw, float * gyrRaw, float * magRaw) {
 //#endif
 
 float mag_tmp[3]={0};
+//long sample_time__gyro_us=0;
 
 #ifdef C_IO_IMU_USE_ITG_ADXL_HMC
     // Read x, y, z acceleration, pack the data.
@@ -247,6 +264,8 @@ float mag_tmp[3]={0};
 	taskENTER_CRITICAL();
 #endif
   	c_common_i2c_readBytes(I2Cx_imu, GYRO_ADDR, GYRO_X_ADDR, 6, imuBuffer);
+  	sample_time_gyro_us[0] = c_io_imu_sample_time_us();
+
 #ifdef ENABLE_PREEMPT
 	taskEXIT_CRITICAL();
 #endif
